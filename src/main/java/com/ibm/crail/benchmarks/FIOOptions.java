@@ -23,6 +23,9 @@ package com.ibm.crail.benchmarks;
 
 import org.apache.commons.cli.*;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * Created by atr on 11.10.17.
  */
@@ -32,7 +35,8 @@ public class FIOOptions extends TestOptions {
     private String warmUpinputLocations;
     private boolean withWarmup;
     private String test;
-    private String[][] fxOptions; // to parquet or spark
+    private Map<String, String> inputFormatOptions; // input format options
+    private Map<String, String> outputFormatOptions; // output format options
     private int parallelism; // spark parallelization
     private int numTasks;
     private long sizePerTask; // valid for writing
@@ -50,12 +54,14 @@ public class FIOOptions extends TestOptions {
         this.align = 0; // alight to zero
         this.requetSize = 1024 * 1024; // 1MB
         this.withWarmup = false;
+        this.inputFormatOptions = new HashMap<>(4);
 
         options.addOption("h", "help", false, "show help.");
         options.addOption("i", "input", true, "[String] a location of input directory where files are read and written.");
         options.addOption("w", "warmupInput", true, "[String,...] a list of input files/directory used for warmup. Same semantics as the -i flag.");
-        options.addOption("t", "test", true, "[String] which test to perform, HdfsRead, HdfsWrite, ParquetRead, ParquetWrite, SFFRead, SFFWrite. Default " + this.test);
-        options.addOption("o", "options", true, "[<String,String>,...] options to set on SparkConf, NYI");
+        options.addOption("t", "test", true, "[String] which test to perform, HdfsRead, HdfsWrite, ParquetRead, ParquetWrite, SFFRead, SFFWrite, IteratorRead, IteratorWrite. Default " + this.test);
+        options.addOption("ifo", "inputFormatOptions", true, "input format options as key0,value0,key1,value1...");
+        options.addOption("so", "sparkOptions", true, "[<String,String>,...] options to set on SparkConf, NYI");
         options.addOption("n", "numTasks", true, "[Int] number of tasks");
         options.addOption("p", "parallel", true, "[Int] amoount of parallelism in terms of parallel spark tasks. Default: = numTasks");
         options.addOption("s", "size", true, "[Long] size per task. Takes prefixes like k, m, g, t");
@@ -90,8 +96,14 @@ public class FIOOptions extends TestOptions {
                 if (cmd.hasOption("t")) {
                     this.test = cmd.getOptionValue("t").trim();
                 }
-                if (cmd.hasOption("o")) {
-                    errorAbort(" -o is not yet implemented");
+                if (cmd.hasOption("ifo")) {
+                    String[] one = cmd.getOptionValue("ifo").trim().split(",");
+                    if (one.length % 2 != 0) {
+                        errorAbort("Illegal format for inputFormatOptions. Number of parameters " + one.length + " are not even");
+                    }
+                    for (int i = 0; i < one.length; i += 2) {
+                        this.inputFormatOptions.put(one[i].trim(), one[i + 1].trim());
+                    }
                 }
                 if(cmd.hasOption("p")){
                     this.parallelism = Integer.parseInt(cmd.getOptionValue("p").trim());
@@ -118,10 +130,11 @@ public class FIOOptions extends TestOptions {
                 errorAbort("Failed to parse command line properties" + e);
             }
         }
-        if(!(isTestHdfsRead() || isTestHdfsWrite() || isTestPaquetRead() || isTestSFFRead())){
+        if(!(isTestHdfsRead() || isTestHdfsWrite() || isTestPaquetRead() || isTestSFFRead() || isTestIteratorRead())){
             errorAbort("Illegal test name for FIO : " + this.test);
         }
-        if(this.inputLocations == null){
+        if(this.inputLocations == null && !isTestIteratorRead()){
+            // iterator read does not need a input file location
             errorAbort("Please specify input location with -i");
         }
     }
@@ -162,6 +175,10 @@ public class FIOOptions extends TestOptions {
         return this.test.compareToIgnoreCase("hdfsWrite") == 0;
     }
 
+    public boolean isTestIteratorRead(){
+        return this.test.compareToIgnoreCase("iteratorRead") == 0;
+    }
+
     public String getInputLocations(){
         return this.inputLocations;
     }
@@ -184,6 +201,10 @@ public class FIOOptions extends TestOptions {
 
     public int getRequetSize(){
         return this.requetSize;
+    }
+
+    public Map<String, String> getInputFormatOptions(){
+        return this.inputFormatOptions;
     }
 
     public String getTestName(){

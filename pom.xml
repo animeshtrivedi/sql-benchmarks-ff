@@ -38,6 +38,11 @@
       <version>1.0</version>
     </dependency>
     <dependency>
+      <groupId>org.apache.spark.sql</groupId>
+      <artifactId>spark-nullff</artifactId>
+      <version>1.0</version>
+    </dependency>
+    <dependency>
       <groupId>org.scala-lang</groupId>
       <artifactId>scala-library</artifactId>
       <version>${scala.version}</version>

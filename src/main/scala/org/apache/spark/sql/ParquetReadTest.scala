@@ -55,7 +55,6 @@ class ParquetReadTest(fioOptions:FIOOptions, spark:SparkSession) extends BaseTes
       val vectorizedReader = new VectorizedParquetRecordReader
       vectorizedReader.initialize(fx._1, List("intKey", "payload").asJava)
       vectorizedReader.enableReturningBatches()
-
       val recordIterator = new RecordReaderIterator(vectorizedReader).asInstanceOf[Iterator[InternalRow]]
       val objArr = new Array[Object](2)
       // these are dummy SQL metrics we can remove them eventually
@@ -63,15 +62,13 @@ class ParquetReadTest(fioOptions:FIOOptions, spark:SparkSession) extends BaseTes
       objArr(1) = new SQLMetric("atr1", 0L)
       val generatedIterator = new GeneratedIteratorIntWithPayload(objArr)
       generatedIterator.init(0, Array(recordIterator))
-      val s2 = System.nanoTime()
       var rowsx = 0L
-
+      val s2 = System.nanoTime()
       while(generatedIterator.hasNext){
-        generatedIterator.next().asInstanceOf[UnsafeRow]
+        val rows = generatedIterator.next().asInstanceOf[UnsafeRow]
         rowsx+=1
       }
       val s3 = System.nanoTime()
-
       iotime.add(s3 -s2)
       setuptime.add(s2 -s1)
       totalRows.add(rowsx)

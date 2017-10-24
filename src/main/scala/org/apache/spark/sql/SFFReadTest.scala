@@ -64,7 +64,7 @@ class SFFReadTest(fioOptions:FIOOptions, spark:SparkSession) extends BaseTest {
       setuptime.add(s2 -s1)
       totalRows.add(rowsx)
     })
-    "SFF read " + filesEnumerated.size + " HDFS files in " + fioOptions.getInputLocations + " directory, total rows " + totalRows.value
+    "SFF read " + filesEnumerated.size + " HDFS files in " + fioOptions.getInputLocations + " directory (total bytes " + totalBytesExpected + " ), total rows " + totalRows.value
   }
 
   override def explain(): Unit = {}

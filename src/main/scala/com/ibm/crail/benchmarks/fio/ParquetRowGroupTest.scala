@@ -1,16 +1,15 @@
-package org.apache.spark.sql
+package com.ibm.crail.benchmarks.fio
 
-import com.ibm.crail.benchmarks.fio.FIOUtils
 import com.ibm.crail.benchmarks.{BaseTest, FIOOptions, Utils}
-import org.apache.spark.sql.catalyst.InternalRow
-import org.apache.spark.sql.execution.datasources.RecordReaderIterator
-import org.apache.spark.sql.execution.datasources.parquet.VectorizedParquetRecordReader
-import org.apache.spark.sql.execution.vectorized.ColumnarBatch
+import org.apache.hadoop.conf.Configuration
+import org.apache.hadoop.fs.Path
+import org.apache.parquet.hadoop.ParquetFileReader
+import org.apache.spark.sql.SparkSession
 
 /**
   * Created by atr on 24.10.17.
   */
-class SparkColumnarBatchTest (fioOptions:FIOOptions, spark:SparkSession) extends BaseTest {
+class ParquetRowGroupTest (fioOptions:FIOOptions, spark:SparkSession) extends BaseTest {
 
   private val filesEnumerated = FIOUtils.enumerateWithSize(fioOptions.getInputLocations)
   println(filesEnumerated)
@@ -25,41 +24,46 @@ class SparkColumnarBatchTest (fioOptions:FIOOptions, spark:SparkSession) extends
   private val rowBatches = spark.sparkContext.longAccumulator("rowBatches")
   private val rdd = spark.sparkContext.parallelize(filesEnumerated, fioOptions.getParallelism)
 
-
   override def execute(): String = {
     rdd.foreach(fx =>{
       val s1 = System.nanoTime()
-      /* from there on we use the generated code */
-      import scala.collection.JavaConverters._
-      val vectorizedReader = new VectorizedParquetRecordReader
-      vectorizedReader.initialize(fx._1, List("intKey", "payload").asJava)
-      vectorizedReader.enableReturningBatches()
-      val recordIterator = new RecordReaderIterator(vectorizedReader).asInstanceOf[Iterator[InternalRow]]
-      var rowsx = 0L
-      var rowsBatchx = 0L
+      val conf = new Configuration()
+      val path = new Path(fx._1)
+      val parquetReader = ParquetFileReader.open(conf, path)
+        //new ParquetFileReader(config, footer.getFileMetaData, file, blocks, requestedSchema.getColumns)
+      val expectedRows = parquetReader.getRecordCount
+      var readSoFarRows = 0L
+      var rowBatchesx = 0L
+
       val s2 = System.nanoTime()
-      while(recordIterator.hasNext){
-        val columnarBatch = recordIterator.next.asInstanceOf[ColumnarBatch]
-        rowsx+=columnarBatch.numRows()
-        rowsBatchx+=1
+      while (readSoFarRows < expectedRows){
+        val pageReadStore = parquetReader.readNextRowGroup()
+        readSoFarRows+=pageReadStore.getRowCount
+        rowBatchesx+=1
       }
+
       val s3 = System.nanoTime()
+      parquetReader.close()
+      val s4 = System.nanoTime()
+
       iotime.add(s3 -s2)
       setuptime.add(s2 -s1)
-      totalRows.add(rowsx)
-      rowBatches.add(rowsBatchx)
+      setuptime.add(s4 -s3)
+      totalRows.add(readSoFarRows)
+      rowBatches.add(rowBatchesx)
     })
-    "SparkColumnarBatch : Parquet<int,payload> read " + filesEnumerated.size +
+
+    "ParquetFileReader.readNextRowGroup " + filesEnumerated.size +
       " HDFS files in " + fioOptions.getInputLocations +
       " directory (total bytes " + totalBytesExpected +
       " ), total rows " + totalRows.value +
       " , rowBatch " + rowBatches.value +
-      " , expected Spark ColumarGroup size is (approx DEFAULT_BATCH_SIZE rows in ColumnarBatch): " + (totalRows.value / rowBatches.value)
+      " , expected parquet RowGroup size is : " + (totalBytesExpected / rowBatches.value)
   }
 
   override def explain(): Unit = {}
 
-  override def plainExplain(): String = "SparkColumnarBatch <int,payload> reading test"
+  override def plainExplain(): String = "ParquetFileReader.readNextRowGroup read test "
 
   override def printAdditionalInformation(timelapsedinNanosec:Long): String = {
     val bw = Utils.twoLongDivToDecimal(totalBytesExpected, timelapsedinNanosec)

@@ -59,7 +59,7 @@ public class FIOOptions extends TestOptions {
         options.addOption("h", "help", false, "show help.");
         options.addOption("i", "input", true, "[String] a location of input directory where files are read and written.");
         options.addOption("w", "warmupInput", true, "[String,...] a list of input files/directory used for warmup. Same semantics as the -i flag.");
-        options.addOption("t", "test", true, "[String] which test to perform, HdfsRead, HdfsWrite, ParquetRead, ParquetWrite, SFFRead, SFFWrite, IteratorRead, IteratorWrite, SparkColumnarBatchRead. Default " + this.test);
+        options.addOption("t", "test", true, "[String] which test to perform, HdfsRead, HdfsWrite, ParquetRead, ParquetWrite, SFFRead, SFFWrite, IteratorRead, SparkColumnarBatchRead, ParquetRowGroupTest. Default " + this.test);
         options.addOption("ifo", "inputFormatOptions", true, "input format options as key0,value0,key1,value1...");
         options.addOption("so", "sparkOptions", true, "[<String,String>,...] options to set on SparkConf, NYI");
         options.addOption("n", "numTasks", true, "[Int] number of tasks");
@@ -130,7 +130,7 @@ public class FIOOptions extends TestOptions {
                 errorAbort("Failed to parse command line properties" + e);
             }
         }
-        if(!(isTestHdfsRead() || isTestHdfsWrite() || isTestPaquetRead() || isTestSFFRead() || isTestIteratorRead() || isTestSparkColumnarBatchReadTest())){
+        if(!(isTestHdfsRead() || isTestHdfsWrite() || isTestPaquetRead() || isTestSFFRead() || isTestIteratorRead() || isTestSparkColumnarBatchReadTest() || isTestParquetRowGroupTest())){
             errorAbort("Illegal test name for FIO : " + this.test);
         }
         if(this.inputLocations == null && !isTestIteratorRead()){
@@ -181,6 +181,10 @@ public class FIOOptions extends TestOptions {
 
     public boolean isTestSparkColumnarBatchReadTest(){
         return this.test.compareToIgnoreCase("SparkColumnarBatchRead") == 0;
+    }
+
+    public boolean isTestParquetRowGroupTest(){
+        return this.test.compareToIgnoreCase("ParquetRowGroupTest") == 0;
     }
 
     public String getInputLocations(){

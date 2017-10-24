@@ -40,6 +40,8 @@ object FIOTestFactory {
       new IteratorReadTest(fioOptions, spark)
     }  else if (fioOptions.isTestSparkColumnarBatchReadTest){
       new SparkColumnarBatchTest(fioOptions, spark)
+    } else if (fioOptions.isTestParquetRowGroupTest){
+      new ParquetRowGroupTest(fioOptions, spark)
     } else {
       throw new Exception("Illegal test name for FIO: + " + fioOptions.getTestName)
     }

@@ -22,12 +22,18 @@ package org.apache.spark.sql
 
 import com.ibm.crail.benchmarks.fio.{FIOTest, FIOUtils}
 import com.ibm.crail.benchmarks.{FIOOptions, Utils}
+import org.apache.hadoop.conf.Configuration
+import org.apache.hadoop.fs.Path
+import org.apache.parquet.hadoop.ParquetFileReader
 import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.catalyst.expressions.UnsafeRow
 import org.apache.spark.sql.execution.GeneratedIteratorIntWithPayload
+import org.apache.spark.sql.execution.GeneratedIteratorStoreSales
 import org.apache.spark.sql.execution.datasources.RecordReaderIterator
 import org.apache.spark.sql.execution.datasources.parquet.VectorizedParquetRecordReader
 import org.apache.spark.sql.execution.metric.SQLMetric
+
+import scala.collection.mutable
 
 /**
   * Created by atr on 12.10.17.
@@ -47,20 +53,46 @@ class ParquetReadTest(fioOptions:FIOOptions, spark:SparkSession) extends FIOTest
   private val rdd = spark.sparkContext.parallelize(filesEnumerated, fioOptions.getParallelism)
 
 
+  private val columnNames = scala.collection.mutable.ListBuffer.empty[String]
+  setColumnNames()
+
+  private def setColumnNames():Unit = {
+    val conf = new Configuration()
+    val parquetReader = ParquetFileReader.open(conf, new Path(filesEnumerated.head._1))
+    val schema = parquetReader.getFooter.getFileMetaData.getSchema
+    val listPath = schema.getPaths
+    for(a <- 0 until listPath.size()){
+      val arr = listPath.get(a)
+      arr.foreach(p => {
+        columnNames += p
+      })
+    }
+    println("Detected Column names: " + columnNames)
+  }
+
+  private val table = if(columnNames.size == 2) "IntWithPayload" else "store_sales"
+
+
   override def execute(): String = {
     rdd.foreach(fx =>{
       val s1 = System.nanoTime()
       /* from there on we use the generated code */
       import scala.collection.JavaConverters._
       val vectorizedReader = new VectorizedParquetRecordReader
-      vectorizedReader.initialize(fx._1, List("intKey", "payload").asJava)
+
+      vectorizedReader.initialize(fx._1, columnNames.asJava)
       vectorizedReader.enableReturningBatches()
       val recordIterator = new RecordReaderIterator(vectorizedReader).asInstanceOf[Iterator[InternalRow]]
       val objArr = new Array[Object](2)
       // these are dummy SQL metrics we can remove them eventually
       objArr(0) = new SQLMetric("atr1", 0L)
       objArr(1) = new SQLMetric("atr1", 0L)
-      val generatedIterator = new GeneratedIteratorIntWithPayload(objArr)
+
+      val generatedIterator = if(columnNames.size == 2) {
+        new GeneratedIteratorIntWithPayload(objArr)
+      } else {
+        new GeneratedIteratorStoreSales(objArr)
+      }
       generatedIterator.init(0, Array(recordIterator))
       var rowsx = 0L
       val s2 = System.nanoTime()
@@ -73,12 +105,12 @@ class ParquetReadTest(fioOptions:FIOOptions, spark:SparkSession) extends FIOTest
       setuptime.add(s2 -s1)
       totalRows.add(rowsx)
     })
-    "Parquet<int,payload> read " + filesEnumerated.size + " HDFS files in " + fioOptions.getInputLocations + " directory (total bytes " + totalBytesExpected + " ), total rows " + totalRows.value
+    "Parquet " + table + " read " + filesEnumerated.size + " HDFS files in " + fioOptions.getInputLocations + " directory (total bytes " + totalBytesExpected + " ), total rows " + totalRows.value
   }
 
   override def explain(): Unit = {}
 
-  override def plainExplain(): String = "Parquet<int,payload> reading test"
+  override def plainExplain(): String = "Parquet " + table + " reading test"
 
   override def printAdditionalInformation(timelapsedinNanosec:Long): String = {
     val bw = Utils.twoLongDivToDecimal(totalBytesExpected * 8L, timelapsedinNanosec)

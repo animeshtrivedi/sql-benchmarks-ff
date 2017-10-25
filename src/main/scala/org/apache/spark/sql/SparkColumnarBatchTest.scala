@@ -1,7 +1,7 @@
 package org.apache.spark.sql
 
-import com.ibm.crail.benchmarks.fio.FIOUtils
-import com.ibm.crail.benchmarks.{BaseTest, FIOOptions, Utils}
+import com.ibm.crail.benchmarks.fio.{FIOTest, FIOUtils}
+import com.ibm.crail.benchmarks.{FIOOptions, Utils}
 import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.execution.datasources.RecordReaderIterator
 import org.apache.spark.sql.execution.datasources.parquet.VectorizedParquetRecordReader
@@ -10,7 +10,7 @@ import org.apache.spark.sql.execution.vectorized.ColumnarBatch
 /**
   * Created by atr on 24.10.17.
   */
-class SparkColumnarBatchTest (fioOptions:FIOOptions, spark:SparkSession) extends BaseTest {
+class SparkColumnarBatchTest (fioOptions:FIOOptions, spark:SparkSession) extends FIOTest {
 
   private val filesEnumerated = FIOUtils.enumerateWithSize(fioOptions.getInputLocations)
   println(filesEnumerated)
@@ -62,7 +62,7 @@ class SparkColumnarBatchTest (fioOptions:FIOOptions, spark:SparkSession) extends
   override def plainExplain(): String = "SparkColumnarBatch <int,payload> reading test"
 
   override def printAdditionalInformation(timelapsedinNanosec:Long): String = {
-    val bw = Utils.twoLongDivToDecimal(totalBytesExpected, timelapsedinNanosec)
+    val bw = Utils.twoLongDivToDecimal(totalBytesExpected * 8L, timelapsedinNanosec)
     val ioTime = Utils.twoLongDivToDecimal(iotime.value, Utils.MICROSEC)
     val setupTime = Utils.twoLongDivToDecimal(setuptime.value, Utils.MICROSEC)
     val rounds = fioOptions.getNumTasks / fioOptions.getParallelism

@@ -1,6 +1,6 @@
 package com.ibm.crail.benchmarks.fio
 
-import com.ibm.crail.benchmarks.{BaseTest, FIOOptions, Utils}
+import com.ibm.crail.benchmarks.{FIOOptions, Utils}
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.Path
 import org.apache.parquet.hadoop.ParquetFileReader
@@ -9,7 +9,7 @@ import org.apache.spark.sql.SparkSession
 /**
   * Created by atr on 24.10.17.
   */
-class ParquetRowGroupTest (fioOptions:FIOOptions, spark:SparkSession) extends BaseTest {
+class ParquetRowGroupTest (fioOptions:FIOOptions, spark:SparkSession) extends FIOTest {
 
   private val filesEnumerated = FIOUtils.enumerateWithSize(fioOptions.getInputLocations)
   println(filesEnumerated)
@@ -66,7 +66,7 @@ class ParquetRowGroupTest (fioOptions:FIOOptions, spark:SparkSession) extends Ba
   override def plainExplain(): String = "ParquetFileReader.readNextRowGroup read test "
 
   override def printAdditionalInformation(timelapsedinNanosec:Long): String = {
-    val bw = Utils.twoLongDivToDecimal(totalBytesExpected, timelapsedinNanosec)
+    val bw = Utils.twoLongDivToDecimal(totalBytesExpected * 8L, timelapsedinNanosec)
     val ioTime = Utils.twoLongDivToDecimal(iotime.value, Utils.MICROSEC)
     val setupTime = Utils.twoLongDivToDecimal(setuptime.value, Utils.MICROSEC)
     val rounds = fioOptions.getNumTasks / fioOptions.getParallelism

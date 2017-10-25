@@ -1,6 +1,6 @@
 package com.ibm.crail.benchmarks.fio
 
-import com.ibm.crail.benchmarks.{BaseTest, FIOOptions, Utils}
+import com.ibm.crail.benchmarks.{FIOOptions, Utils}
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FileSystem, Path}
 import org.apache.spark.sql.SparkSession
@@ -8,7 +8,7 @@ import org.apache.spark.sql.SparkSession
 /**
   * Created by atr on 12.10.17.
   */
-class HdfsWriteTest (fioOptions:FIOOptions, spark:SparkSession) extends BaseTest  {
+class HdfsWriteTest (fioOptions:FIOOptions, spark:SparkSession) extends FIOTest  {
   val baseName = "/hdfsfile"
   private val fullPathFileNames = {
     for (i <- 0 until fioOptions.getNumTasks) yield fioOptions.getInputLocations + baseName + i

@@ -1,21 +1,22 @@
 package org.apache.spark.sql
 
-import com.ibm.crail.benchmarks.{BaseTest, FIOOptions, Utils}
+import com.ibm.crail.benchmarks.fio.FIOTest
+import com.ibm.crail.benchmarks.{FIOOptions, Utils}
 
 /**
   * Created by atr on 13.10.17.
   */
-class IteratorReadTest (fioOptions:FIOOptions, spark:SparkSession) extends BaseTest {
+class IteratorReadTest (fioOptions:FIOOptions, spark:SparkSession) extends FIOTest {
 
   private val rdd = spark.sparkContext.parallelize(Range(0, fioOptions.getNumTasks),
     fioOptions.getParallelism)
   private val options = fioOptions.getInputFormatOptions
   if(options.size() == 0){
     println("Warning: No options found - adding the default I have")
-    options.put("inputrows", "1000000")
-    options.put("payloadsize", "4096")
-    options.put("intrange", "1000000")
-    options.put("schema", "IntWithPayload")
+    options.put(NullFileFormat.KEY_INPUT_ROWS, "1000000")
+    options.put(NullFileFormat.KEY_PAYLOAD_SIZE, "4096")
+    options.put(NullFileFormat.KEY_INT_RANGE, "1000000")
+    options.put(NullFileFormat.KEY_SCHEMA, "IntWithPayload")
   }
 
   private val iotime = spark.sparkContext.longAccumulator("iotime")
@@ -48,7 +49,8 @@ class IteratorReadTest (fioOptions:FIOOptions, spark:SparkSession) extends BaseT
   override def plainExplain(): String = "IteratorRead test"
 
   override def printAdditionalInformation(timelapsedinNanosec:Long): String = {
-    val totalBytesExpected = totalRows.value * (4096 + 4)
+    val payloadSize = options.get(NullFileFormat.KEY_PAYLOAD_SIZE).toLong
+    val totalBytesExpected = totalRows.value * (payloadSize + 4L) * 8L
     val bw = Utils.twoLongDivToDecimal(totalBytesExpected, timelapsedinNanosec)
     val bwItr = Utils.twoLongDivToDecimal(totalRows.value, timelapsedinNanosec)
     val ioTime = Utils.twoLongDivToDecimal(iotime.value, Utils.MICROSEC)

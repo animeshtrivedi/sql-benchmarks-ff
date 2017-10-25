@@ -1,16 +1,16 @@
 package org.apache.spark.sql
 
-import com.ibm.crail.benchmarks.fio.FIOUtils
-import com.ibm.crail.benchmarks.{BaseTest, FIOOptions, Utils}
+import com.ibm.crail.benchmarks.fio.{FIOTest, FIOUtils}
+import com.ibm.crail.benchmarks.{FIOOptions, Utils}
 import org.apache.hadoop.conf.Configuration
+import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.catalyst.expressions.UnsafeRow
 import org.apache.spark.sql.execution.datasources.PartitionedFile
 import org.apache.spark.sql.sources.Filter
-import org.apache.spark.sql.catalyst.InternalRow
 /**
   * Created by atr on 12.10.17.
   */
-class SFFReadTest(fioOptions:FIOOptions, spark:SparkSession) extends BaseTest {
+class SFFReadTest(fioOptions:FIOOptions, spark:SparkSession) extends FIOTest {
   private val filesEnumerated = FIOUtils.enumerateWithSize(fioOptions.getInputLocations)
   println(filesEnumerated)
   var totalBytesExpected = 0L
@@ -72,7 +72,7 @@ class SFFReadTest(fioOptions:FIOOptions, spark:SparkSession) extends BaseTest {
   override def plainExplain(): String = "SFF reading test on " + inputDir
 
   override def printAdditionalInformation(timelapsedinNanosec:Long): String = {
-    val bw = Utils.twoLongDivToDecimal(totalBytesExpected, timelapsedinNanosec)
+    val bw = Utils.twoLongDivToDecimal(totalBytesExpected * 8L, timelapsedinNanosec)
     val ioTime = Utils.twoLongDivToDecimal(iotime.value, Utils.MICROSEC)
     val setupTime = Utils.twoLongDivToDecimal(setuptime.value, Utils.MICROSEC)
     val rounds = fioOptions.getNumTasks / fioOptions.getParallelism

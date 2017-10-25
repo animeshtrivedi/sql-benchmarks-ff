@@ -42,6 +42,7 @@ public class FIOOptions extends TestOptions {
     private long sizePerTask; // valid for writing
     private int align; // align to the block size
     private int requetSize;
+    private boolean useFully;
 
     public FIOOptions(){
         options = new Options();
@@ -55,6 +56,7 @@ public class FIOOptions extends TestOptions {
         this.requetSize = 1024 * 1024; // 1MB
         this.withWarmup = false;
         this.inputFormatOptions = new HashMap<>(4);
+        this.useFully = false;
 
         options.addOption("h", "help", false, "show help.");
         options.addOption("i", "input", true, "[String] a location of input directory where files are read and written.");
@@ -67,6 +69,7 @@ public class FIOOptions extends TestOptions {
         options.addOption("s", "size", true, "[Long] size per task. Takes prefixes like k, m, g, t");
         options.addOption("a", "align", true, "[Int] alignment");
         options.addOption("r", "requestSize", true, "[Int] request size ");
+        options.addOption("f", "fully", false, " for HdfsRead test, use the readfully code.");
     }
 
     @Override
@@ -124,6 +127,9 @@ public class FIOOptions extends TestOptions {
                 }
                 if(cmd.hasOption("s")){
                     this.sizePerTask = Utils.sizeStrToBytes2(cmd.getOptionValue("s").trim());
+                }
+                if(cmd.hasOption("f")){
+                    this.useFully = true;
                 }
 
             } catch (ParseException e) {
@@ -217,5 +223,9 @@ public class FIOOptions extends TestOptions {
 
     public String getTestName(){
         return this.test;
+    }
+
+    public boolean isUseFully(){
+        return this.useFully;
     }
 }

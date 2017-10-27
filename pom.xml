@@ -94,6 +94,12 @@
       <artifactId>crail-hdfs</artifactId>
       <version>1.0</version>
     </dependency>
+    <!-- https://mvnrepository.com/artifact/org.apache.parquet/parquet-tools -->
+    <dependency>
+      <groupId>org.apache.parquet</groupId>
+      <artifactId>parquet-tools</artifactId>
+      <version>1.8.2</version>
+    </dependency>
   </dependencies>
 
   <build>

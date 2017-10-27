@@ -43,6 +43,7 @@ public class FIOOptions extends TestOptions {
     private int align; // align to the block size
     private int requetSize;
     private boolean useFully;
+    private int parquetAloneVersion;
 
     public FIOOptions(){
         options = new Options();
@@ -57,11 +58,12 @@ public class FIOOptions extends TestOptions {
         this.withWarmup = false;
         this.inputFormatOptions = new HashMap<>(4);
         this.useFully = false;
+        this.parquetAloneVersion = 2;
 
         options.addOption("h", "help", false, "show help.");
         options.addOption("i", "input", true, "[String] a location of input directory where files are read and written.");
         options.addOption("w", "warmupInput", true, "[String,...] a list of input files/directory used for warmup. Same semantics as the -i flag.");
-        options.addOption("t", "test", true, "[String] which test to perform, HdfsRead, HdfsWrite, ParquetRead, ParquetWrite, SFFRead, SFFWrite, IteratorRead, SparkColumnarBatchRead, ParquetRowGroupTest. Default " + this.test);
+        options.addOption("t", "test", true, "[String] which test to perform, HdfsRead, HdfsWrite, ParquetRead, ParquetWrite, SFFRead, SFFWrite, IteratorRead, SparkColumnarBatchRead, ParquetRowGroupTest, ParquetAloneTest. Default " + this.test);
         options.addOption("ifo", "inputFormatOptions", true, "input format options as key0,value0,key1,value1...");
         options.addOption("so", "sparkOptions", true, "[<String,String>,...] options to set on SparkConf, NYI");
         options.addOption("n", "numTasks", true, "[Int] number of tasks");
@@ -70,6 +72,7 @@ public class FIOOptions extends TestOptions {
         options.addOption("a", "align", true, "[Int] alignment");
         options.addOption("r", "requestSize", true, "[Int] request size ");
         options.addOption("f", "fully", false, " for HdfsRead test, use the readfully code.");
+        options.addOption("pv", "parquetalone", true, "[int] parquet alone test version, 1 or 2. default is :" + this.parquetAloneVersion);
     }
 
     @Override
@@ -122,6 +125,12 @@ public class FIOOptions extends TestOptions {
                 if(cmd.hasOption("a")){
                     this.align = Integer.parseInt(cmd.getOptionValue("a").trim());
                 }
+                if(cmd.hasOption("pv")){
+                    this.parquetAloneVersion = Integer.parseInt(cmd.getOptionValue("pv").trim());
+                    if(this.parquetAloneVersion < 0 || this.parquetAloneVersion > 2 ){
+                        errorAbort(" valid parquet test numbers are 1 or 2, passed: " + this.parquetAloneVersion);
+                    }
+                }
                 if(cmd.hasOption("r")){
                     this.requetSize = Integer.parseInt(cmd.getOptionValue("r").trim());
                 }
@@ -136,7 +145,8 @@ public class FIOOptions extends TestOptions {
                 errorAbort("Failed to parse command line properties" + e);
             }
         }
-        if(!(isTestHdfsRead() || isTestHdfsWrite() || isTestPaquetRead() || isTestSFFRead() || isTestIteratorRead() || isTestSparkColumnarBatchReadTest() || isTestParquetRowGroupTest())){
+        if(!(isTestHdfsRead() || isTestHdfsWrite() || isTestPaquetRead() || isTestSFFRead() || isTestIteratorRead()
+                || isTestSparkColumnarBatchReadTest() || isTestParquetRowGroupTest() || isTestParquetAloneTest())) {
             errorAbort("Illegal test name for FIO : " + this.test);
         }
         if(this.inputLocations == null && !isTestIteratorRead()){
@@ -193,6 +203,10 @@ public class FIOOptions extends TestOptions {
         return this.test.compareToIgnoreCase("ParquetRowGroupTest") == 0;
     }
 
+    public boolean isTestParquetAloneTest(){
+        return this.test.compareToIgnoreCase("ParquetAloneTest") == 0;
+    }
+
     public String getInputLocations(){
         return this.inputLocations;
     }
@@ -227,5 +241,9 @@ public class FIOOptions extends TestOptions {
 
     public boolean isUseFully(){
         return this.useFully;
+    }
+
+    public int getParquetAloneVersion(){
+        return this.parquetAloneVersion;
     }
 }

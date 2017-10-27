@@ -42,6 +42,8 @@ object FIOTestFactory {
       new SparkColumnarBatchTest(fioOptions, spark)
     } else if (fioOptions.isTestParquetRowGroupTest){
       new ParquetRowGroupTest(fioOptions, spark)
+    } else if (fioOptions.isTestParquetAloneTest){
+      new ParquetAloneTest(fioOptions, spark)
     } else {
       throw new Exception("Illegal test name for FIO: + " + fioOptions.getTestName)
     }

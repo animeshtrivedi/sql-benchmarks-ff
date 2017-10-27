@@ -12,16 +12,16 @@ class IteratorReadTest (fioOptions:FIOOptions, spark:SparkSession) extends FIOTe
     fioOptions.getParallelism)
   private val options = fioOptions.getInputFormatOptions
   if(options.size() == 0){
-    println("Warning: No options found - adding the default I have")
+    println("**** Warning:**** No options found - adding the default that I have")
     options.put(NullFileFormat.KEY_INPUT_ROWS, "1000000")
     options.put(NullFileFormat.KEY_PAYLOAD_SIZE, "4096")
     options.put(NullFileFormat.KEY_INT_RANGE, "1000000")
     options.put(NullFileFormat.KEY_SCHEMA, "IntWithPayload")
   }
 
-  private val iotime = spark.sparkContext.longAccumulator("iotime")
-  private val setuptime = spark.sparkContext.longAccumulator("setuptime")
-  private val totalRows = spark.sparkContext.longAccumulator("totalRows")
+  private val iotimeAcc = spark.sparkContext.longAccumulator("iotime")
+  private val setuptimeAcc = spark.sparkContext.longAccumulator("setuptime")
+  private val totalRowsAcc = spark.sparkContext.longAccumulator("totalRows")
 
   override def execute(): String = {
     rdd.foreach(p =>{
@@ -37,11 +37,11 @@ class IteratorReadTest (fioOptions:FIOOptions, spark:SparkSession) extends FIOTe
         rowsx+=1
       }
       val s3 = System.nanoTime()
-      iotime.add(s3 -s2)
-      setuptime.add(s2 -s1)
-      totalRows.add(rowsx)
+      iotimeAcc.add(s3 -s2)
+      setuptimeAcc.add(s2 -s1)
+      totalRowsAcc.add(rowsx)
     })
-    "IteratorRead<int,payload> read " + totalRows.value + " rows "
+    "IteratorRead " + options.get(NullFileFormat.KEY_SCHEMA) + " read " + totalRowsAcc.value + " rows "
   }
 
   override def explain(): Unit = {}
@@ -49,15 +49,20 @@ class IteratorReadTest (fioOptions:FIOOptions, spark:SparkSession) extends FIOTe
   override def plainExplain(): String = "IteratorRead test"
 
   override def printAdditionalInformation(timelapsedinNanosec:Long): String = {
-    val payloadSize = options.get(NullFileFormat.KEY_PAYLOAD_SIZE).toLong
-    val totalBytesExpected = totalRows.value * (payloadSize + 4L) * 8L
-    val bw = Utils.twoLongDivToDecimal(totalBytesExpected, timelapsedinNanosec)
-    val bwItr = Utils.twoLongDivToDecimal(totalRows.value, timelapsedinNanosec)
-    val ioTime = Utils.twoLongDivToDecimal(iotime.value, Utils.MICROSEC)
-    val setupTime = Utils.twoLongDivToDecimal(setuptime.value, Utils.MICROSEC)
+    val rowSize = {
+      val x = new NullFileFormat()
+      import collection.JavaConversions._
+      x.setSchema(options.toMap)
+      x.getSchemaRowSize(options.toMap)
+    }
+    val totalBitsExpected = totalRowsAcc.value * rowSize * 8L
+    val bw = Utils.twoLongDivToDecimal(totalBitsExpected, timelapsedinNanosec)
+    val bwItr = Utils.twoLongDivToDecimal(totalRowsAcc.value, timelapsedinNanosec)
+    val ioTime = Utils.twoLongDivToDecimal(iotimeAcc.value, Utils.MICROSEC)
+    val setupTime = Utils.twoLongDivToDecimal(setuptimeAcc.value, Utils.MICROSEC)
     val rounds = fioOptions.getNumTasks / fioOptions.getParallelism
-    "Bandwidth is           : " + bw + " Gbps or " + bwItr + " itr/sec \n"+
-      "Total, io time         : " + ioTime + " msec | setuptime " + setupTime + " msec | (numTasks: " + fioOptions.getNumTasks + ", parallelism: " + fioOptions.getParallelism + ", rounds: " + rounds + "\n"
+    "Bandwidth is           : " + bw + " Gbps or " + bwItr + " Gitr/sec \n"+
+      "Total, io time         : " + ioTime + " msec, setuptime " + setupTime + " msec, rowSize : " + rowSize + " bytes | (numTasks: " + fioOptions.getNumTasks + ", parallelism: " + fioOptions.getParallelism + ", rounds: " + rounds + "\n"
     //    +"Average, io time/stage : " + Utils.decimalRound(ioTime/fioOptions.getNumTasks.toDouble) +
     //      " msec | setuptime " + Utils.decimalRound(setupTime/fioOptions.getNumTasks.toDouble) + " msec\n"+
     //    "NOTE: keep in mind that if tasks > #cpus_in_the_cluster then you need to adjust the average time\n"

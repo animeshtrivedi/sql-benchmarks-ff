@@ -6,5 +6,5 @@ import com.ibm.crail.benchmarks.BaseTest
   * Created by atr on 24.10.17.
   */
 
-abstract class FIOTest extends BaseTest {
+trait FIOTest extends BaseTest {
 }

@@ -1,15 +1,11 @@
 package org.apache.spark.sql.hive.orc
 
-import java.net.URI
-
-import com.ibm.crail.benchmarks.{FIOOptions, Utils}
 import com.ibm.crail.benchmarks.fio.{FIOTest, FIOUtils}
+import com.ibm.crail.benchmarks.{FIOOptions, Utils}
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FileSystem, Path}
 import org.apache.hadoop.hive.ql.io.orc.{OrcFile, OrcStruct, SparkOrcNewRecordReader}
 import org.apache.hadoop.hive.serde2.objectinspector.StructObjectInspector
-import org.apache.hadoop.mapreduce.Job
-import org.apache.hadoop.mapreduce.lib.input.{FileInputFormat, FileSplit}
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.catalyst.expressions.UnsafeRow
@@ -36,6 +32,7 @@ class ORCSparkReadTest(fioOptions:FIOOptions, spark:SparkSession) extends FIOTes
   //private val rdd2 = spark.sparkContext.parallelize(transform(), fioOptions.getParallelism)
 
   private def transform():List[Iterator[InternalRow]] = {
+    // TODO: This fails with the serialization error
     filesEnumerated.map(fx=> {
       val conf = new Configuration()
       val path = new Path(fx._1)
@@ -63,26 +60,11 @@ class ORCSparkReadTest(fioOptions:FIOOptions, spark:SparkSession) extends FIOTes
       val conf = new Configuration()
       val path = new Path(fx._1)
       val uri = path.toUri
-      val fs:FileSystem = FileSystem.get(uri, conf)
-      val fileStatus = fs.getFileStatus(path)
-      val orcfileSupprt = new OrcFileFormat()
       val schema = OrcFileOperator.readSchema(Seq(uri.toString), Some(conf)).get
-      val filePart = PartitionedFile(InternalRow.empty, fx._1, 0, fx._2)
 
       val orcRecordReader = {
-        val job = Job.getInstance(conf)
-        FileInputFormat.setInputPaths(job, filePart.filePath)
-
-        val fileSplit = new FileSplit(
-          new Path(new URI(filePart.filePath)), filePart.start, filePart.length, Array.empty
-        )
-        // Custom OrcRecordReader is used to get
-        // ObjectInspector during recordReader creation itself and can
-        // avoid NameNode call in unwrapOrcStructs per file.
-        // Specifically would be helpful for partitioned datasets.
-        val orcReader = OrcFile.createReader(
-          new Path(new URI(filePart.filePath)), OrcFile.readerOptions(conf))
-        new SparkOrcNewRecordReader(orcReader, conf, fileSplit.getStart, fileSplit.getLength)
+        val orcReader = OrcFile.createReader(path, OrcFile.readerOptions(conf))
+        new SparkOrcNewRecordReader(orcReader, conf, 0, fx._2)
       }
       val recordsIterator = new RecordReaderIterator[OrcStruct](orcRecordReader)
       val readerItr = OrcRelation.unwrapOrcStructs(

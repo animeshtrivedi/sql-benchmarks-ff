@@ -6,8 +6,8 @@ import org.apache.hadoop.fs.Path
 import org.apache.parquet.column.page.PageReadStore
 import org.apache.parquet.example.data.simple.convert.GroupRecordConverter
 import org.apache.parquet.format.converter.ParquetMetadataConverter
-import org.apache.parquet.hadoop.{ParquetFileReader, ParquetReader}
 import org.apache.parquet.hadoop.metadata.ParquetMetadata
+import org.apache.parquet.hadoop.{ParquetFileReader, ParquetReader}
 import org.apache.parquet.io.{ColumnIOFactory, MessageColumnIO}
 import org.apache.parquet.schema.MessageType
 import org.apache.parquet.tools.read.{SimpleReadSupport, SimpleRecord}

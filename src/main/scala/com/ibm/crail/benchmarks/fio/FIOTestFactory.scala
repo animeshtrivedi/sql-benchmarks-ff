@@ -22,6 +22,7 @@ package com.ibm.crail.benchmarks.fio
 
 import com.ibm.crail.benchmarks.{BaseTest, FIOOptions}
 import org.apache.spark.sql._
+import org.apache.spark.sql.hive.orc.ORCSparkReadTest
 
 /**
   * Created by atr on 11.10.17.
@@ -44,6 +45,8 @@ object FIOTestFactory {
       new ParquetRowGroupTest(fioOptions, spark)
     } else if (fioOptions.isTestParquetAloneTest){
       new ParquetAloneTest(fioOptions, spark)
+    } else if (fioOptions.isTestORCSparkReadTest){
+      new ORCSparkReadTest(fioOptions, spark)
     } else {
       throw new Exception("Illegal test name for FIO: + " + fioOptions.getTestName)
     }

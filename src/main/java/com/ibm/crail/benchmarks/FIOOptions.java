@@ -63,7 +63,7 @@ public class FIOOptions extends TestOptions {
         options.addOption("h", "help", false, "show help.");
         options.addOption("i", "input", true, "[String] a location of input directory where files are read and written.");
         options.addOption("w", "warmupInput", true, "[String,...] a list of input files/directory used for warmup. Same semantics as the -i flag.");
-        options.addOption("t", "test", true, "[String] which test to perform, HdfsRead, HdfsWrite, ParquetRead, ParquetWrite, SFFRead, SFFWrite, IteratorRead, SparkColumnarBatchRead, ParquetRowGroupTest, ParquetAloneTest. Default " + this.test);
+        options.addOption("t", "test", true, "[String] which test to perform, HdfsRead, HdfsWrite, ParquetRead, ParquetWrite, SFFRead, SFFWrite, IteratorRead, SparkColumnarBatchRead, ParquetRowGroupTest, ParquetAloneTest, ORCSparkRead. Default " + this.test);
         options.addOption("ifo", "inputFormatOptions", true, "input format options as key0,value0,key1,value1...");
         options.addOption("so", "sparkOptions", true, "[<String,String>,...] options to set on SparkConf, NYI");
         options.addOption("n", "numTasks", true, "[Int] number of tasks");
@@ -146,7 +146,8 @@ public class FIOOptions extends TestOptions {
             }
         }
         if(!(isTestHdfsRead() || isTestHdfsWrite() || isTestPaquetRead() || isTestSFFRead() || isTestIteratorRead()
-                || isTestSparkColumnarBatchReadTest() || isTestParquetRowGroupTest() || isTestParquetAloneTest())) {
+                || isTestSparkColumnarBatchReadTest() || isTestParquetRowGroupTest() || isTestParquetAloneTest()
+                || isTestORCSparkReadTest())) {
             errorAbort("Illegal test name for FIO : " + this.test);
         }
         if(this.inputLocations == null && !isTestIteratorRead()){
@@ -206,6 +207,9 @@ public class FIOOptions extends TestOptions {
     public boolean isTestParquetAloneTest(){
         return this.test.compareToIgnoreCase("ParquetAloneTest") == 0;
     }
+    public boolean isTestORCSparkReadTest(){
+        return this.test.compareToIgnoreCase("ORCSparkRead") == 0;
+    }
 
     public String getInputLocations(){
         return this.inputLocations;
@@ -246,4 +250,5 @@ public class FIOOptions extends TestOptions {
     public int getParquetAloneVersion(){
         return this.parquetAloneVersion;
     }
+
 }

@@ -27,8 +27,7 @@ import org.apache.hadoop.fs.Path
 import org.apache.parquet.hadoop.ParquetFileReader
 import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.catalyst.expressions.UnsafeRow
-import org.apache.spark.sql.execution.GeneratedIteratorIntWithPayload
-import org.apache.spark.sql.execution.GeneratedIteratorStoreSales
+import org.apache.spark.sql.execution.{GeneratedIteratorIntWithPayload, GeneratedIteratorStoreSales, GeneratedIteratorStoreSalesNoWrite}
 import org.apache.spark.sql.execution.datasources.RecordReaderIterator
 import org.apache.spark.sql.execution.datasources.parquet.VectorizedParquetRecordReader
 import org.apache.spark.sql.execution.metric.SQLMetric

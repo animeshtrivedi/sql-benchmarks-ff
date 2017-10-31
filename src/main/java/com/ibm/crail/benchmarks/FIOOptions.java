@@ -271,6 +271,10 @@ public class FIOOptions extends TestOptions {
         return this.test;
     }
 
+    public String getSparkFormat(){
+        return this.sparkFormat;
+    }
+
     public boolean isUseFully(){
         return this.useFully;
     }

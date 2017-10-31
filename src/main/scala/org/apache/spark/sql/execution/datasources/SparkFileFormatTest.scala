@@ -26,6 +26,8 @@ abstract class SparkFileFormatTest(fioOptions:FIOOptions, spark:SparkSession)  e
     totalBytesExpected = totalBytesExpected + fx._2
   })
 
+  def rdd:RDD[((PartitionedFile) => Iterator[InternalRow] , String, Long)] = ???
+
   def transformFilesToRDD(fileFormat:FileFormat,
                                   func:(SparkSession,
                                     StructType,
@@ -62,6 +64,28 @@ abstract class SparkFileFormatTest(fioOptions:FIOOptions, spark:SparkSession)  e
   protected val iotimeAcc:LongAccumulator = spark.sparkContext.longAccumulator("iotime")
   protected val setuptimeAcc:LongAccumulator = spark.sparkContext.longAccumulator("setuptime")
   protected val totalRowsAcc:LongAccumulator = spark.sparkContext.longAccumulator("totalRows")
+
+  override def execute(): String = {
+    this.rdd.foreach(fx => {
+      val s1 = System.nanoTime()
+      val filePart = PartitionedFile(InternalRow.empty, fx._2, 0, fx._3)
+      val itr = fx._1(filePart)
+      var rowsPerWorker = 0L
+      val s2 = System.nanoTime()
+      while (itr.hasNext) {
+        itr.next()
+        rowsPerWorker += 1L
+      }
+      val s3 = System.nanoTime()
+      totalRowsAcc.add(rowsPerWorker)
+      setuptimeAcc.add(s2 - s1)
+      iotimeAcc.add(s3 - s2)
+    })
+    fioOptions.getTestName + ":" + fioOptions.getSparkFormat + " " + filesEnumerated.size +
+      " HDFS files in " + fioOptions.getInputLocations +
+      " directory (total bytes " + totalBytesExpected +
+      " ), total rows " + totalRowsAcc.value
+  }
 
   override def printAdditionalInformation(timelapsedinNanosec:Long): String = {
     val bw = Utils.twoLongDivToDecimal(totalBytesExpected * 8L, timelapsedinNanosec)

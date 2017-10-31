@@ -1,6 +1,7 @@
 package org.apache.spark.sql.execution.datasources.json
 
 import com.ibm.crail.benchmarks.FIOOptions
+import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.execution.datasources.{PartitionedFile, SparkFileFormatTest}
@@ -11,24 +12,9 @@ import org.apache.spark.sql.execution.datasources.{PartitionedFile, SparkFileFor
 class JsonSparkReadTest (fioOptions:FIOOptions, spark:SparkSession) extends SparkFileFormatTest(fioOptions, spark) {
   /* here we do file format specific initialization */
   private val fileFormat = new JsonFileFormat()
-  private val rdd = transformFilesToRDD(fileFormat, fileFormat.buildReader)
 
-  override def execute(): String = {
-    rdd.foreach(fx => {
-      val filePart = PartitionedFile(InternalRow.empty, fx._2, 0, fx._3)
-      val itr = fx._1(filePart)
-      var rowsPerWorker = 0L
-      while (itr.hasNext) {
-        itr.next()
-        rowsPerWorker += 1L
-      }
-      totalRowsAcc.add(rowsPerWorker)
-    })
-    "JsonSparkTest " + filesEnumerated.size +
-      " HDFS files in " + fioOptions.getInputLocations +
-      " directory (total bytes " + totalBytesExpected +
-      " ), total rows " + totalRowsAcc.value
-  }
+  override final val rdd:RDD[((PartitionedFile) => Iterator[InternalRow] , String, Long)] =
+    transformFilesToRDD(fileFormat, fileFormat.buildReader)
 
   override def explain(): Unit = {}
 

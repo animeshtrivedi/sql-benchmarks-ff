@@ -1,6 +1,7 @@
 package org.apache.spark.sql.execution.datasources.sff
 
 import com.ibm.crail.benchmarks.FIOOptions
+import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.execution.datasources.{PartitionedFile, SparkFileFormatTest}
 import org.apache.spark.sql.{SimpleFileFormat, SparkSession}
@@ -11,24 +12,8 @@ import org.apache.spark.sql.{SimpleFileFormat, SparkSession}
 class SffSparkReadTest (fioOptions:FIOOptions, spark:SparkSession) extends SparkFileFormatTest(fioOptions, spark) {
   /* here we do file format specific initialization */
   private val fileFormat = new SimpleFileFormat()
-  private val rdd = transformFilesToRDD(fileFormat, fileFormat.buildReader)
-
-  override def execute(): String = {
-    rdd.foreach(fx => {
-      val filePart = PartitionedFile(InternalRow.empty, fx._2, 0, fx._3)
-      val itr = fx._1(filePart)
-      var rowsPerWorker = 0L
-      while (itr.hasNext) {
-        itr.next()
-        rowsPerWorker += 1L
-      }
-      totalRowsAcc.add(rowsPerWorker)
-    })
-    "SimpleFFSparkTest " + filesEnumerated.size +
-      " HDFS files in " + fioOptions.getInputLocations +
-      " directory (total bytes " + totalBytesExpected +
-      " ), total rows " + totalRowsAcc.value
-  }
+  override final val rdd:RDD[((PartitionedFile) => Iterator[InternalRow] , String, Long)] =
+    transformFilesToRDD(fileFormat, fileFormat.buildReader)
 
   override def explain(): Unit = {}
 

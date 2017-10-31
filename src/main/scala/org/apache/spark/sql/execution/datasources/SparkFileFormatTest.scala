@@ -33,8 +33,7 @@ abstract class SparkFileFormatTest(fioOptions:FIOOptions, spark:SparkSession)  e
                                     StructType,
                                     Seq[Filter],
                                     Map[String,String],
-                                    Configuration)=>(PartitionedFile => Iterator[InternalRow]),
-                          numTasks:Int)
+                                    Configuration)=>(PartitionedFile => Iterator[InternalRow]))
   :RDD[((PartitionedFile) => Iterator[InternalRow] , String, Long)] = {
     val list = filesEnumerated.map(fx => {
       val conf = new Configuration()
@@ -45,18 +44,19 @@ abstract class SparkFileFormatTest(fioOptions:FIOOptions, spark:SparkSession)  e
       val schema = fileFormat.inferSchema(spark,
         Map[String, String](),
         Seq(fileStatus)).get
+      import collection.JavaConversions._
       (func(spark,
           schema,
           new StructType(),
           schema,
           Seq[Filter](),
-          Map[String, String](),
+          fioOptions.getInputFormatOptions.toMap,
           conf),
         fx._1,
         fx._2
       )
     })
-    spark.sparkContext.parallelize(list, numTasks)
+    spark.sparkContext.parallelize(list, fioOptions.getNumTasks)
   }
 
   protected val iotimeAcc:LongAccumulator = spark.sparkContext.longAccumulator("iotime")

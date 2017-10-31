@@ -10,8 +10,17 @@ import org.apache.spark.sql.{NullFileFormat, SparkSession}
 class NullioSparkReadTest (fioOptions:FIOOptions, spark:SparkSession) extends SparkFileFormatTest(fioOptions, spark) {
   /* here we do file format specific initialization */
   private val fileFormat = new NullFileFormat()
+  private val options = fioOptions.getInputFormatOptions
+  if(options.size() == 0){
+    println("**** Warning:**** No options found - adding the default that I have")
+    options.put(NullFileFormat.KEY_INPUT_ROWS, "1000000")
+    options.put(NullFileFormat.KEY_PAYLOAD_SIZE, "4096")
+    options.put(NullFileFormat.KEY_INT_RANGE, "1000000")
+    options.put(NullFileFormat.KEY_SCHEMA, "IntWithPayload")
+  }
+
   private val rdd = transformFilesToRDD(fileFormat,
-    fileFormat.buildReader, fioOptions.getParallelism)
+    fileFormat.buildReader)
 
   override def execute(): String = {
     rdd.foreach(fx => {

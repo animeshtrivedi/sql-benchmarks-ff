@@ -11,8 +11,7 @@ import org.apache.spark.sql.execution.datasources.{PartitionedFile, SparkFileFor
 class JsonSparkReadTest (fioOptions:FIOOptions, spark:SparkSession) extends SparkFileFormatTest(fioOptions, spark) {
   /* here we do file format specific initialization */
   private val fileFormat = new JsonFileFormat()
-  private val rdd = transformFilesToRDD(fileFormat,
-    fileFormat.buildReader, fioOptions.getParallelism)
+  private val rdd = transformFilesToRDD(fileFormat, fileFormat.buildReader)
 
   override def execute(): String = {
     rdd.foreach(fx => {

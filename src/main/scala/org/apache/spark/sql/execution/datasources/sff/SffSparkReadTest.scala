@@ -11,8 +11,7 @@ import org.apache.spark.sql.{SimpleFileFormat, SparkSession}
 class SffSparkReadTest (fioOptions:FIOOptions, spark:SparkSession) extends SparkFileFormatTest(fioOptions, spark) {
   /* here we do file format specific initialization */
   private val fileFormat = new SimpleFileFormat()
-  private val rdd = transformFilesToRDD(fileFormat,
-    fileFormat.buildReader, fioOptions.getParallelism)
+  private val rdd = transformFilesToRDD(fileFormat, fileFormat.buildReader)
 
   override def execute(): String = {
     rdd.foreach(fx => {

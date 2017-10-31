@@ -2,9 +2,11 @@ package org.apache.spark.sql
 
 import com.ibm.crail.benchmarks.fio.{FIOTest, FIOUtils}
 import com.ibm.crail.benchmarks.{FIOOptions, Utils}
+import org.apache.hadoop.conf.Configuration
+import org.apache.hadoop.fs.{FileStatus, FileSystem, Path}
 import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.execution.datasources.RecordReaderIterator
-import org.apache.spark.sql.execution.datasources.parquet.VectorizedParquetRecordReader
+import org.apache.spark.sql.execution.datasources.parquet.{ParquetFileFormat, VectorizedParquetRecordReader}
 import org.apache.spark.sql.execution.vectorized.ColumnarBatch
 
 /**
@@ -18,12 +20,21 @@ class SparkColumnarBatchTest (fioOptions:FIOOptions, spark:SparkSession) extends
   filesEnumerated.foreach(fx => {
     totalBytesExpected = totalBytesExpected + fx._2
   })
+  private val conf = new Configuration()
+  private val filesEnumeratedWithSchema = filesEnumerated.map(fx => {
+    val ff = new ParquetFileFormat
+    val path = new Path(fx._1)
+    val uri = path.toUri
+    val fs:FileSystem = FileSystem.get(uri, conf)
+    val fileStatus = fs.getFileStatus(path)
+    (fx._1, fx._2, ff.inferSchema(spark, Map[String, String](), Seq(fileStatus)))
+  })
 
   private val iotime = spark.sparkContext.longAccumulator("iotime")
   private val setuptime = spark.sparkContext.longAccumulator("setuptime")
   private val totalRows = spark.sparkContext.longAccumulator("totalRows")
   private val rowBatches = spark.sparkContext.longAccumulator("rowBatches")
-  private val rdd = spark.sparkContext.parallelize(filesEnumerated, fioOptions.getParallelism)
+  private val rdd = spark.sparkContext.parallelize(filesEnumeratedWithSchema, fioOptions.getParallelism)
 
 
   override def execute(): String = {
@@ -32,7 +43,8 @@ class SparkColumnarBatchTest (fioOptions:FIOOptions, spark:SparkSession) extends
       /* from there on we use the generated code */
       import scala.collection.JavaConverters._
       val vectorizedReader = new VectorizedParquetRecordReader
-      vectorizedReader.initialize(fx._1, List("intKey", "payload").asJava)
+      val cols = fx._3.get.fieldNames.toList
+      vectorizedReader.initialize(fx._1, cols.asJava)
       vectorizedReader.enableReturningBatches()
       val recordIterator = new RecordReaderIterator(vectorizedReader).asInstanceOf[Iterator[InternalRow]]
       var rowsx = 0L

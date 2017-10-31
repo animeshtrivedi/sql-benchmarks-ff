@@ -37,8 +37,8 @@ abstract class SparkFileFormatTest(fioOptions:FIOOptions, spark:SparkSession)  e
                                     Map[String,String],
                                     Configuration)=>(PartitionedFile => Iterator[InternalRow]))
   :RDD[((PartitionedFile) => Iterator[InternalRow] , String, Long)] = {
+    val conf = new Configuration()
     val list = filesEnumerated.map(fx => {
-      val conf = new Configuration()
       val path = new Path(fx._1)
       val uri = path.toUri
       val fs:FileSystem = FileSystem.get(uri, conf)

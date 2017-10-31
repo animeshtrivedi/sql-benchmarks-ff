@@ -11,10 +11,11 @@ import org.apache.spark.sql.execution.datasources.{PartitionedFile, SparkFileFor
   */
 class JsonSparkReadTest (fioOptions:FIOOptions, spark:SparkSession) extends SparkFileFormatTest(fioOptions, spark) {
   /* here we do file format specific initialization */
-  private val fileFormat = new JsonFileFormat()
-
-  override final val rdd:RDD[((PartitionedFile) => Iterator[InternalRow] , String, Long)] =
+  /* JSON file format is not serializable */
+  override final val rdd:RDD[((PartitionedFile) => Iterator[InternalRow] , String, Long)] = {
+    val fileFormat = new JsonFileFormat()
     transformFilesToRDD(fileFormat, fileFormat.buildReader)
+  }
 
   override def explain(): Unit = {}
 

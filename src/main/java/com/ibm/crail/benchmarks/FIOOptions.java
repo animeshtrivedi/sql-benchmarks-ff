@@ -44,6 +44,7 @@ public class FIOOptions extends TestOptions {
     private int requetSize;
     private boolean useFully;
     private int parquetAloneVersion;
+    private String sparkFormat;
 
     public FIOOptions(){
         options = new Options();
@@ -59,11 +60,13 @@ public class FIOOptions extends TestOptions {
         this.inputFormatOptions = new HashMap<>(4);
         this.useFully = false;
         this.parquetAloneVersion = 2;
+        this.sparkFormat = "parquet";
 
         options.addOption("h", "help", false, "show help.");
         options.addOption("i", "input", true, "[String] a location of input directory where files are read and written.");
         options.addOption("w", "warmupInput", true, "[String,...] a list of input files/directory used for warmup. Same semantics as the -i flag.");
-        options.addOption("t", "test", true, "[String] which test to perform, HdfsRead, HdfsWrite, ParquetRead, ParquetWrite, SFFRead, SFFWrite, IteratorRead, SparkColumnarBatchRead, ParquetRowGroupTest, ParquetAloneTest, ORCSparkRead. Default " + this.test);
+        options.addOption("t", "test", true, "[String] which test to perform, HdfsRead, HdfsWrite, ParquetRead, ParquetWrite, SFFRead, SFFWrite, IteratorRead, SparkColumnarBatchRead, ParquetRowGroupTest, ParquetAloneTest, or SparkRead (see -sf). Default " + this.test);
+        options.addOption("sf", "sparkFormatTest", true, "[String] which spark reading test to perform, ORC, parquet, json, null, or sff. Default " + this.sparkFormat);
         options.addOption("ifo", "inputFormatOptions", true, "input format options as key0,value0,key1,value1...");
         options.addOption("so", "sparkOptions", true, "[<String,String>,...] options to set on SparkConf, NYI");
         options.addOption("n", "numTasks", true, "[Int] number of tasks");
@@ -101,6 +104,9 @@ public class FIOOptions extends TestOptions {
                 }
                 if (cmd.hasOption("t")) {
                     this.test = cmd.getOptionValue("t").trim();
+                }
+                if (cmd.hasOption("sf")) {
+                    this.sparkFormat = cmd.getOptionValue("sf").trim();
                 }
                 if (cmd.hasOption("ifo")) {
                     String[] one = cmd.getOptionValue("ifo").trim().split(",");
@@ -147,8 +153,13 @@ public class FIOOptions extends TestOptions {
         }
         if(!(isTestHdfsRead() || isTestHdfsWrite() || isTestPaquetRead() || isTestSFFRead() || isTestIteratorRead()
                 || isTestSparkColumnarBatchReadTest() || isTestParquetRowGroupTest() || isTestParquetAloneTest()
-                || isTestORCSparkReadTest())) {
+                || isTestSparkReadTest())) {
             errorAbort("Illegal test name for FIO : " + this.test);
+            if(isTestSparkReadTest()){
+                if(!(isSRTParquet() || isSRTORC() || isSRTJson() || isSRTNull() || isSRTSFF())){
+                    errorAbort("Illegal test format name for Spark Reading : " + this.sparkFormat);
+                }
+            }
         }
         if(this.inputLocations == null && !isTestIteratorRead()){
             // iterator read does not need a input file location
@@ -207,8 +218,25 @@ public class FIOOptions extends TestOptions {
     public boolean isTestParquetAloneTest(){
         return this.test.compareToIgnoreCase("ParquetAloneTest") == 0;
     }
-    public boolean isTestORCSparkReadTest(){
-        return this.test.compareToIgnoreCase("ORCSparkRead") == 0;
+
+    public boolean isTestSparkReadTest(){
+        return this.test.compareToIgnoreCase("SparkRead") == 0;
+    }
+
+    public boolean isSRTParquet(){
+        return this.sparkFormat.compareToIgnoreCase("parquet") == 0;
+    }
+    public boolean isSRTORC(){
+        return this.sparkFormat.compareToIgnoreCase("orc") == 0;
+    }
+    public boolean isSRTJson(){
+        return this.sparkFormat.compareToIgnoreCase("json") == 0;
+    }
+    public boolean isSRTSFF(){
+        return this.sparkFormat.compareToIgnoreCase("sff") == 0;
+    }
+    public boolean isSRTNull(){
+        return this.sparkFormat.compareToIgnoreCase("null") == 0;
     }
 
     public String getInputLocations(){

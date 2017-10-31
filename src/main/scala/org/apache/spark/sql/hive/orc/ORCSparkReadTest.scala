@@ -1,28 +1,27 @@
 package org.apache.spark.sql.hive.orc
 
-import com.ibm.crail.benchmarks.fio.FIOTest
-import com.ibm.crail.benchmarks.{FIOOptions, Utils}
+import com.ibm.crail.benchmarks.FIOOptions
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.catalyst.InternalRow
-import org.apache.spark.sql.execution.datasources.{FileFormat, PartitionedFile, SparkFileFormatTest}
+import org.apache.spark.sql.execution.datasources.{PartitionedFile, SparkFileFormatTest}
 
 /**
   * Created by atr on 30.10.17.
   */
 class ORCSparkReadTest(fioOptions:FIOOptions, spark:SparkSession) extends SparkFileFormatTest(fioOptions, spark) {
+  /* here we do file format specific initialization */
+  private val fileFormat = new OrcFileFormat()
+  private val rdd = transformFilesToRDD(fileFormat, fileFormat.buildReader, fioOptions.getParallelism)
 
   override def execute(): String = {
     rdd.foreach(fx => {
-      val func = fx._2
-      val sch = fx._1
-      val filePart = PartitionedFile(InternalRow.empty, fx._3, 0, fx._4)
-      val itr = func(filePart)
+      val filePart = PartitionedFile(InternalRow.empty, fx._2, 0, fx._3)
+      val itr = fx._1(filePart)
       var x = 0L
       while (itr.hasNext) {
         itr.next()
         x += 1L
       }
-      println(" ********** x was " + x)
     })
     "ORCSparkTest " + filesEnumerated.size +
       " HDFS files in " + fioOptions.getInputLocations +
@@ -30,14 +29,12 @@ class ORCSparkReadTest(fioOptions:FIOOptions, spark:SparkSession) extends SparkF
       " ), total rows " + totalRowsAcc.value
   }
 
-  override def getFileFormat:FileFormat= {
-    new OrcFileFormat()
-  }
-
   override def explain(): Unit = {}
 
   override def plainExplain(): String = "ORCSparkTest test "
 }
+
+
 
 //  rdd.foreach(fx =>{
 //    val s1 = System.nanoTime()

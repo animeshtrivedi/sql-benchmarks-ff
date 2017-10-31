@@ -22,6 +22,9 @@ package com.ibm.crail.benchmarks.fio
 
 import com.ibm.crail.benchmarks.{BaseTest, FIOOptions}
 import org.apache.spark.sql._
+import org.apache.spark.sql.execution.datasources.NullioSparkReadTest
+import org.apache.spark.sql.execution.datasources.json.JsonSparkReadTest
+import org.apache.spark.sql.execution.datasources.parquet.ParquetSparkReadTest
 import org.apache.spark.sql.hive.orc.ORCSparkReadTest
 
 /**
@@ -45,8 +48,20 @@ object FIOTestFactory {
       new ParquetRowGroupTest(fioOptions, spark)
     } else if (fioOptions.isTestParquetAloneTest){
       new ParquetAloneTest(fioOptions, spark)
-    } else if (fioOptions.isTestORCSparkReadTest){
-      new ORCSparkReadTest(fioOptions, spark)
+    } else if (fioOptions.isTestSparkReadTest){
+      if(fioOptions.isSRTParquet){
+        new ParquetSparkReadTest(fioOptions, spark)
+      } else if(fioOptions.isSRTORC) {
+        new ORCSparkReadTest(fioOptions, spark)
+      } else if (fioOptions.isSRTJson){
+        new JsonSparkReadTest(fioOptions, spark)
+      } else if (fioOptions.isSRTNull) {
+        new NullioSparkReadTest(fioOptions, spark)
+      } else if(fioOptions.isSRTSFF) {
+        new SFFReadTest(fioOptions, spark)
+      } else {
+        throw new Exception("Illegal format name for spark reading ")
+      }
     } else {
       throw new Exception("Illegal test name for FIO: + " + fioOptions.getTestName)
     }

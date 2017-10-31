@@ -1,14 +1,15 @@
 package org.apache.spark.sql.execution.datasources
 
-import com.ibm.crail.benchmarks.{FIOOptions, Utils}
 import com.ibm.crail.benchmarks.fio.{FIOTest, FIOUtils}
+import com.ibm.crail.benchmarks.{FIOOptions, Utils}
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FileSystem, Path}
+import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.catalyst.InternalRow
-import org.apache.spark.sql.execution.datasources.{FileFormat, PartitionedFile}
 import org.apache.spark.sql.sources.Filter
 import org.apache.spark.sql.types.StructType
+import org.apache.spark.util.LongAccumulator
 
 /**
   * Created by atr on 30.10.17.
@@ -25,8 +26,17 @@ abstract class SparkFileFormatTest(fioOptions:FIOOptions, spark:SparkSession)  e
     totalBytesExpected = totalBytesExpected + fx._2
   })
 
-  def transformWithPartitionValue(fileFormat:FileFormat):List[(StructType, (PartitionedFile) => Iterator[InternalRow] , String, Long)] = {
-    filesEnumerated.map(fx => {
+  def transformFilesToRDD(fileFormat:FileFormat,
+                                  func:(SparkSession,
+                                    StructType,
+                                    StructType,
+                                    StructType,
+                                    Seq[Filter],
+                                    Map[String,String],
+                                    Configuration)=>(PartitionedFile => Iterator[InternalRow]),
+                          numTasks:Int)
+  :RDD[((PartitionedFile) => Iterator[InternalRow] , String, Long)] = {
+    val list = filesEnumerated.map(fx => {
       val conf = new Configuration()
       val path = new Path(fx._1)
       val uri = path.toUri
@@ -35,8 +45,7 @@ abstract class SparkFileFormatTest(fioOptions:FIOOptions, spark:SparkSession)  e
       val schema = fileFormat.inferSchema(spark,
         Map[String, String](),
         Seq(fileStatus)).get
-      (schema,
-        fileFormat.buildReaderWithPartitionValues(spark,
+      (func(spark,
           schema,
           new StructType(),
           schema,
@@ -47,11 +56,12 @@ abstract class SparkFileFormatTest(fioOptions:FIOOptions, spark:SparkSession)  e
         fx._2
       )
     })
+    spark.sparkContext.parallelize(list, numTasks)
   }
 
-  protected val iotimeAcc = spark.sparkContext.longAccumulator("iotime")
-  protected val setuptimeAcc = spark.sparkContext.longAccumulator("setuptime")
-  protected val totalRowsAcc = spark.sparkContext.longAccumulator("totalRows")
+  protected val iotimeAcc:LongAccumulator = spark.sparkContext.longAccumulator("iotime")
+  protected val setuptimeAcc:LongAccumulator = spark.sparkContext.longAccumulator("setuptime")
+  protected val totalRowsAcc:LongAccumulator = spark.sparkContext.longAccumulator("totalRows")
 
   override def printAdditionalInformation(timelapsedinNanosec:Long): String = {
     val bw = Utils.twoLongDivToDecimal(totalBytesExpected * 8L, timelapsedinNanosec)
@@ -61,9 +71,4 @@ abstract class SparkFileFormatTest(fioOptions:FIOOptions, spark:SparkSession)  e
     "Bandwidth is           : " + bw + " Gbps \n"+
       "Total, io time         : " + ioTime + " msec | setuptime " + setupTime + " msec | (numTasks: " + fioOptions.getNumTasks + ", parallelism: " + fioOptions.getParallelism + ", rounds: " + rounds + "\n"
   }
-
-  def getFileFormat:FileFormat
-
-  protected lazy val rdd = spark.sparkContext.parallelize(transformWithPartitionValue(getFileFormat),
-    fioOptions.getParallelism)
 }

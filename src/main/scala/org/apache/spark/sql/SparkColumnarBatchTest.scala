@@ -20,14 +20,14 @@ class SparkColumnarBatchTest (fioOptions:FIOOptions, spark:SparkSession) extends
   filesEnumerated.foreach(fx => {
     totalBytesExpected = totalBytesExpected + fx._2
   })
-  private val conf = new Configuration()
   private val filesEnumeratedWithSchema = filesEnumerated.map(fx => {
+    val conf = new Configuration()
     val ff = new ParquetFileFormat
     val path = new Path(fx._1)
     val uri = path.toUri
     val fs:FileSystem = FileSystem.get(uri, conf)
     val fileStatus = fs.getFileStatus(path)
-    (fx._1, fx._2, ff.inferSchema(spark, Map[String, String](), Seq(fileStatus)))
+    (fx._1, fx._2, ff.inferSchema(spark, Map[String, String](), Seq(fileStatus)).get)
   })
 
   private val iotime = spark.sparkContext.longAccumulator("iotime")
@@ -36,14 +36,13 @@ class SparkColumnarBatchTest (fioOptions:FIOOptions, spark:SparkSession) extends
   private val rowBatches = spark.sparkContext.longAccumulator("rowBatches")
   private val rdd = spark.sparkContext.parallelize(filesEnumeratedWithSchema, fioOptions.getParallelism)
 
-
   override def execute(): String = {
     rdd.foreach(fx =>{
       val s1 = System.nanoTime()
       /* from there on we use the generated code */
       import scala.collection.JavaConverters._
       val vectorizedReader = new VectorizedParquetRecordReader
-      val cols = fx._3.get.fieldNames.toList
+      val cols = fx._3.fieldNames.toList
       vectorizedReader.initialize(fx._1, cols.asJava)
       vectorizedReader.enableReturningBatches()
       val recordIterator = new RecordReaderIterator(vectorizedReader).asInstanceOf[Iterator[InternalRow]]

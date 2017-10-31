@@ -18,11 +18,12 @@ class JsonSparkReadTest (fioOptions:FIOOptions, spark:SparkSession) extends Spar
     rdd.foreach(fx => {
       val filePart = PartitionedFile(InternalRow.empty, fx._2, 0, fx._3)
       val itr = fx._1(filePart)
-      var x = 0L
+      var rowsPerWorker = 0L
       while (itr.hasNext) {
         itr.next()
-        x += 1L
+        rowsPerWorker += 1L
       }
+      totalRowsAcc.add(rowsPerWorker)
     })
     "JsonSparkTest " + filesEnumerated.size +
       " HDFS files in " + fioOptions.getInputLocations +

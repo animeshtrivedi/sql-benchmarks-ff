@@ -17,5 +17,5 @@ class ParquetSparkReadTest (fioOptions:FIOOptions, spark:SparkSession) extends S
 
   override def explain(): Unit = {}
 
-  override def plainExplain(): String = "ParquetSparkTest test "
+  override def plainExplain(): String = "ParquetSparkTest test \n WARNING: This shows the performance of reading columnarBatch."
 }

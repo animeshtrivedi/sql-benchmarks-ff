@@ -41,13 +41,18 @@ object FIOUtils {
   }
 
   def enumerateWithSize(fileName:String):List[(String, Long)] = {
-    val path = new Path(fileName)
-    val conf = new Configuration()
-    val fileSystem = path.getFileSystem(conf)
-    // we get the file system
-    val fileStatus:Array[FileStatus]  = fileSystem.listStatus(path)
-    val files = fileStatus.map(_.getPath).filter(ok).toList
-    files.map(fx=> (fx.toString, fileSystem.getFileStatus(fx).getLen))
+    if(fileName != null) {
+      val path = new Path(fileName)
+      val conf = new Configuration()
+      val fileSystem = path.getFileSystem(conf)
+      // we get the file system
+      val fileStatus: Array[FileStatus] = fileSystem.listStatus(path)
+      val files = fileStatus.map(_.getPath).filter(ok).toList
+      files.map(fx => (fx.toString, fileSystem.getFileStatus(fx).getLen))
+    } else {
+      /* this will happen for null io */
+      List[(String, Long)]()
+    }
   }
 
   def inferSFFSchema(dirName:String, spark:SparkSession):Option[StructType] = {

@@ -21,7 +21,7 @@ import org.apache.spark.util.LongAccumulator
 abstract class SparkFileFormatTest(fioOptions:FIOOptions, spark:SparkSession)  extends FIOTest {
 
   protected val filesEnumerated:List[(String, Long)] = FIOUtils.enumerateWithSize(fioOptions.getInputLocations)
-  var totalBytesExpected:Long  = 0L
+  protected var totalBytesExpected:Long  = 0L
   filesEnumerated.foreach(fx => {
     totalBytesExpected = totalBytesExpected + fx._2
   })

@@ -161,7 +161,7 @@ public class FIOOptions extends TestOptions {
                 }
             }
         }
-        if(this.inputLocations == null && !isTestIteratorRead()){
+        if(this.inputLocations == null && !(isTestIteratorRead() || (isTestSparkReadTest() && isSRTNull()))){
             // iterator read does not need a input file location
             errorAbort("Please specify input location with -i");
         }

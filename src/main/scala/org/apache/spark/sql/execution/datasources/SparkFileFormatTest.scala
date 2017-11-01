@@ -92,7 +92,8 @@ abstract class SparkFileFormatTest(fioOptions:FIOOptions, spark:SparkSession)  e
     val ioTime = Utils.twoLongDivToDecimal(iotimeAcc.value, Utils.MICROSEC)
     val setupTime = Utils.twoLongDivToDecimal(setuptimeAcc.value, Utils.MICROSEC)
     val rounds = fioOptions.getNumTasks / fioOptions.getParallelism
+    val setupPercentage = Utils.twoLongDivToDecimal(setuptimeAcc.value * 100, iotimeAcc.value + setuptimeAcc.value)
     "Bandwidth is           : " + bw + " Gbps \n"+
-      "Total, io time         : " + ioTime + " msec | setuptime " + setupTime + " msec | (numTasks: " + fioOptions.getNumTasks + ", parallelism: " + fioOptions.getParallelism + ", rounds: " + rounds + "\n"
+      "Total, io time         : " + ioTime + " msec | setuptime " + setupTime + " msec (" + setupPercentage + "%) | (numTasks: " + fioOptions.getNumTasks + ", parallelism: " + fioOptions.getParallelism + ", rounds: " + rounds + "\n"
   }
 }

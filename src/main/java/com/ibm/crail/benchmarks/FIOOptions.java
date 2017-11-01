@@ -66,7 +66,7 @@ public class FIOOptions extends TestOptions {
         options.addOption("i", "input", true, "[String] a location of input directory where files are read and written.");
         options.addOption("w", "warmupInput", true, "[String,...] a list of input files/directory used for warmup. Same semantics as the -i flag.");
         options.addOption("t", "test", true, "[String] which test to perform, HdfsRead, HdfsWrite, ParquetRead, ParquetWrite, SFFRead, SFFWrite, IteratorRead, SparkColumnarBatchRead, ParquetRowGroupTest, ParquetAloneTest, or SparkRead (see -sf). Default " + this.test);
-        options.addOption("sf", "sparkFormatTest", true, "[String] which spark reading test to perform, ORC, parquet, json, null, or sff. Default " + this.sparkFormat);
+        options.addOption("sf", "sparkFormatTest", true, "[String] which spark reading test to perform, ORC, parquet, json, avro, null, or sff. Default " + this.sparkFormat);
         options.addOption("ifo", "inputFormatOptions", true, "input format options as key0,value0,key1,value1...");
         options.addOption("so", "sparkOptions", true, "[<String,String>,...] options to set on SparkConf, NYI");
         options.addOption("n", "numTasks", true, "[Int] number of tasks");
@@ -156,7 +156,7 @@ public class FIOOptions extends TestOptions {
                 || isTestSparkReadTest())) {
             errorAbort("Illegal test name for FIO : " + this.test);
             if(isTestSparkReadTest()){
-                if(!(isSRTParquet() || isSRTORC() || isSRTJson() || isSRTNull() || isSRTSFF())){
+                if(!(isSRTParquet() || isSRTORC() || isSRTJson() || isSRTNull() || isSRTSFF() || isSRTAvro())){
                     errorAbort("Illegal test format name for Spark Reading : " + this.sparkFormat);
                 }
             }
@@ -237,6 +237,9 @@ public class FIOOptions extends TestOptions {
     }
     public boolean isSRTNull(){
         return this.sparkFormat.compareToIgnoreCase("null") == 0;
+    }
+    public boolean isSRTAvro(){
+        return this.sparkFormat.compareToIgnoreCase("avro") == 0;
     }
 
     public String getInputLocations(){

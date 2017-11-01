@@ -20,6 +20,7 @@
  */
 package com.ibm.crail.benchmarks.fio
 
+import com.databricks.spark.avro.AvroSparkReadTest
 import com.ibm.crail.benchmarks.{BaseTest, FIOOptions}
 import org.apache.spark.sql._
 import org.apache.spark.sql.execution.datasources.NullioSparkReadTest
@@ -59,6 +60,8 @@ object FIOTestFactory {
         new NullioSparkReadTest(fioOptions, spark)
       } else if(fioOptions.isSRTSFF) {
         new SFFReadTest(fioOptions, spark)
+      } else if(fioOptions.isSRTAvro) {
+        new AvroSparkReadTest(fioOptions, spark)
       } else {
         throw new Exception("Illegal format name for spark reading ")
       }

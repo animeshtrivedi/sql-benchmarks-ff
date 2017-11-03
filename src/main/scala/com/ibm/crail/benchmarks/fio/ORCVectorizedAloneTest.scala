@@ -11,7 +11,7 @@ import org.apache.spark.sql.SparkSession
   * Created by atr on 03.11.17.
   */
 class ORCVectorizedAloneTest (fioOptions:FIOOptions, spark:SparkSession) extends FIOTest {
-
+  //MORE: https://issues.apache.org/jira/browse/ORC-72
   private val filesEnumerated = FIOUtils.enumerateWithSize(fioOptions.getInputLocations)
   println(filesEnumerated)
   var totalBytesExpected = 0L

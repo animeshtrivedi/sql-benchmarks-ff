@@ -1,16 +1,23 @@
 package com.ibm.crail.benchmarks.fio
 
+import java.io.IOException
+import java.math.BigInteger
+import java.nio.charset.Charset
+
 import com.ibm.crail.benchmarks.{FIOOptions, Utils}
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.Path
+import org.apache.hadoop.io.UTF8
+import org.apache.parquet.column.ColumnReader
 import org.apache.parquet.column.impl.{ColumnReadStoreImpl, ColumnReaderImpl}
-import org.apache.parquet.column.page.{PageReadStore, PageReader}
+import org.apache.parquet.column.page.{DataPage, PageReadStore, PageReader}
 import org.apache.parquet.example.data.simple.convert.GroupRecordConverter
 import org.apache.parquet.format.converter.ParquetMetadataConverter
 import org.apache.parquet.hadoop.metadata.ParquetMetadata
 import org.apache.parquet.hadoop.{ParquetFileReader, ParquetReader}
+import org.apache.parquet.io.api.{GroupConverter, PrimitiveConverter}
 import org.apache.parquet.io.{ColumnIOFactory, MessageColumnIO}
-import org.apache.parquet.schema.MessageType
+import org.apache.parquet.schema.{MessageType, PrimitiveType}
 import org.apache.parquet.tools.read.{SimpleReadSupport, SimpleRecord}
 import org.apache.spark.sql.SparkSession
 
@@ -34,7 +41,7 @@ class ParquetAloneTest(fioOptions:FIOOptions, spark:SparkSession) extends FIOTes
   private val rdd = spark.sparkContext.parallelize(filesEnumerated, fioOptions.getParallelism)
   private val mode = 1
 
-  override final def execute(): String = if(fioOptions.getParquetAloneVersion == 1) executeV1() else executeV2()
+  override final def execute(): String = if(fioOptions.getParquetAloneVersion == 1) executeV1() else executeV3()
 
   def executeV3():String = {
     rdd.foreach(fx =>{
@@ -47,20 +54,78 @@ class ParquetAloneTest(fioOptions:FIOOptions, spark:SparkSession) extends FIOTes
       val mdata = readFooter.getFileMetaData
       val schema:MessageType = mdata.getSchema
       val colDesc = schema.getColumns
-      var pages:PageReadStore = null
+      var pageReadStore:PageReadStore = null
       val parquetFileReader = ParquetFileReader.open(conf, path)
       val expectedRows = parquetFileReader.getRecordCount
       var rowBatchesx = 0L
       var readSoFarRows = 0L
+      class DumpGroupConverter extends GroupConverter {
+        def start() {
+        }
+
+        def end() {
+        }
+
+        def getConverter(fieldIndex: Int) = new DumpConverter
+      }
+
+      class DumpConverter extends PrimitiveConverter {
+        override def asGroupConverter = new DumpGroupConverter
+      }
+
+      def consume(crstore: ColumnReadStoreImpl, column: org.apache.parquet.column.ColumnDescriptor) = {
+        val dmax = column.getMaxDefinitionLevel
+        val creader:ColumnReader = crstore.getColumnReader(column)
+        for (i <- 0L until creader.getTotalValueCount){
+          val rvalue = creader.getCurrentRepetitionLevel
+          val dvalue = creader.getCurrentDefinitionLevel
+          if(rvalue == dvalue) {
+            val value = column.getType match {
+              case PrimitiveType.PrimitiveTypeName.INT64 => creader.getLong
+
+              case PrimitiveType.PrimitiveTypeName.BINARY => creader.getBinary
+              case PrimitiveType.PrimitiveTypeName.BOOLEAN => creader.getBoolean
+              case PrimitiveType.PrimitiveTypeName.DOUBLE => creader.getDouble
+              case PrimitiveType.PrimitiveTypeName.FLOAT => creader.getFloat
+              case PrimitiveType.PrimitiveTypeName.INT32 => creader.getInteger
+              case PrimitiveType.PrimitiveTypeName.INT96 => {
+                val x = creader.getBinary.getBytesUnsafe
+                if(x == null)
+                  null
+                else
+                  new BigInteger(x)
+             }
+
+              case PrimitiveType.PrimitiveTypeName.FIXED_LEN_BYTE_ARRAY => {
+                val y = creader.getBinary
+                val x = y.getBytesUnsafe
+                if(x == null)
+                  null
+                else{
+                  val buffer = Charset.forName("UTF-8").newDecoder().decode(y.toByteBuffer)
+                  buffer.toString
+                }
+              }
+            }
+          }
+          creader.consume()
+        }
+      }
+
       val s2 = System.nanoTime()
       try
       {
         var contx = true
         while (contx) {
-          pages = parquetFileReader.readNextRowGroup()
-          if (pages != null) {
+          pageReadStore = parquetFileReader.readNextRowGroup()
+          if (pageReadStore != null) {
             rowBatchesx+=1
-            ???
+            readSoFarRows+=pageReadStore.getRowCount
+            val colReader = new ColumnReadStoreImpl(pageReadStore, new DumpGroupConverter,
+              schema, mdata.getCreatedBy)
+            for(i <-0 until colDesc.size()){
+              consume(colReader, colDesc.get(i))
+            }
           } else {
             contx = false
           }

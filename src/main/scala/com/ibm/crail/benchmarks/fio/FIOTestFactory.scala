@@ -49,6 +49,8 @@ object FIOTestFactory {
       new ParquetRowGroupTest(fioOptions, spark)
     } else if (fioOptions.isTestParquetAloneTest){
       new ParquetAloneTest(fioOptions, spark)
+    } else if (fioOptions.isTestORCAloneTest){
+      new ORCAloneTest(fioOptions, spark)
     } else if (fioOptions.isTestSparkReadTest){
       if(fioOptions.isSRTParquet){
         new ParquetSparkReadTest(fioOptions, spark)

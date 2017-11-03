@@ -65,7 +65,7 @@ public class FIOOptions extends TestOptions {
         options.addOption("h", "help", false, "show help.");
         options.addOption("i", "input", true, "[String] a location of input directory where files are read and written.");
         options.addOption("w", "warmupInput", true, "[String,...] a list of input files/directory used for warmup. Same semantics as the -i flag.");
-        options.addOption("t", "test", true, "[String] which test to perform, HdfsRead, HdfsWrite, ParquetRead, ParquetWrite, SFFRead, SFFWrite, IteratorRead, SparkColumnarBatchRead, ParquetRowGroupTest, ParquetAloneTest, or SparkRead (see -sf). Default " + this.test);
+        options.addOption("t", "test", true, "[String] which test to perform, HdfsRead, HdfsWrite, ParquetRead, ParquetWrite, SFFRead, SFFWrite, IteratorRead, SparkColumnarBatchRead, ParquetRowGroupTest, ParquetAloneTest, ORCAloneTest or SparkRead (see -sf). Default " + this.test);
         options.addOption("sf", "sparkFormatTest", true, "[String] which spark reading test to perform, ORC, parquet, json, avro, null, or sff. Default " + this.sparkFormat);
         options.addOption("ifo", "inputFormatOptions", true, "input format options as key0,value0,key1,value1...");
         options.addOption("so", "sparkOptions", true, "[<String,String>,...] options to set on SparkConf, NYI");
@@ -153,7 +153,7 @@ public class FIOOptions extends TestOptions {
         }
         if(!(isTestHdfsRead() || isTestHdfsWrite() || isTestPaquetRead() || isTestSFFRead() || isTestIteratorRead()
                 || isTestSparkColumnarBatchReadTest() || isTestParquetRowGroupTest() || isTestParquetAloneTest()
-                || isTestSparkReadTest())) {
+                || isTestSparkReadTest() || isTestORCAloneTest())) {
             errorAbort("Illegal test name for FIO : " + this.test);
             if(isTestSparkReadTest()){
                 if(!(isSRTParquet() || isSRTORC() || isSRTJson() || isSRTNull() || isSRTSFF() || isSRTAvro())){
@@ -217,6 +217,10 @@ public class FIOOptions extends TestOptions {
 
     public boolean isTestParquetAloneTest(){
         return this.test.compareToIgnoreCase("ParquetAloneTest") == 0;
+    }
+
+    public boolean isTestORCAloneTest(){
+        return this.test.compareToIgnoreCase("ORCAloneTest") == 0;
     }
 
     public boolean isTestSparkReadTest(){

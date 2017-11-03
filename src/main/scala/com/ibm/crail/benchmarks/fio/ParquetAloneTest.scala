@@ -41,7 +41,9 @@ class ParquetAloneTest(fioOptions:FIOOptions, spark:SparkSession) extends FIOTes
   private val rdd = spark.sparkContext.parallelize(filesEnumerated, fioOptions.getParallelism)
   private val mode = 1
 
-  override final def execute(): String = if(fioOptions.getParquetAloneVersion == 1) executeV1() else executeV3()
+  override final def execute(): String = if(fioOptions.getParquetAloneVersion == 1) executeV1()
+  else if (fioOptions.getParquetAloneVersion == 2) executeV2()
+  else executeV3()
 
   def executeV3():String = {
     rdd.foreach(fx =>{
@@ -60,42 +62,33 @@ class ParquetAloneTest(fioOptions:FIOOptions, spark:SparkSession) extends FIOTes
       var rowBatchesx = 0L
       var readSoFarRows = 0L
       class DumpGroupConverter extends GroupConverter {
-        def start() {
-        }
-
-        def end() {
-        }
-
+        def start() {}
+        def end() {}
         def getConverter(fieldIndex: Int) = new DumpConverter
       }
-
       class DumpConverter extends PrimitiveConverter {
         override def asGroupConverter = new DumpGroupConverter
       }
 
-      def consume(crstore: ColumnReadStoreImpl, column: org.apache.parquet.column.ColumnDescriptor) = {
+      def consumeColumn(crstore: ColumnReadStoreImpl, column: org.apache.parquet.column.ColumnDescriptor): Long = {
         val dmax = column.getMaxDefinitionLevel
         val creader:ColumnReader = crstore.getColumnReader(column)
-        for (i <- 0L until creader.getTotalValueCount){
+        val rows = creader.getTotalValueCount
+        for (i <- 0L until rows){
           val rvalue = creader.getCurrentRepetitionLevel
           val dvalue = creader.getCurrentDefinitionLevel
           if(rvalue == dvalue) {
             val value = column.getType match {
-              case PrimitiveType.PrimitiveTypeName.INT64 => creader.getLong
-
               case PrimitiveType.PrimitiveTypeName.BINARY => creader.getBinary
               case PrimitiveType.PrimitiveTypeName.BOOLEAN => creader.getBoolean
               case PrimitiveType.PrimitiveTypeName.DOUBLE => creader.getDouble
               case PrimitiveType.PrimitiveTypeName.FLOAT => creader.getFloat
+              case PrimitiveType.PrimitiveTypeName.INT64 => creader.getLong
               case PrimitiveType.PrimitiveTypeName.INT32 => creader.getInteger
               case PrimitiveType.PrimitiveTypeName.INT96 => {
                 val x = creader.getBinary.getBytesUnsafe
-                if(x == null)
-                  null
-                else
-                  new BigInteger(x)
-             }
-
+                if(x == null) null else new BigInteger(x)
+              }
               case PrimitiveType.PrimitiveTypeName.FIXED_LEN_BYTE_ARRAY => {
                 val y = creader.getBinary
                 val x = y.getBytesUnsafe
@@ -110,7 +103,9 @@ class ParquetAloneTest(fioOptions:FIOOptions, spark:SparkSession) extends FIOTes
           }
           creader.consume()
         }
+        rows
       }
+      var tempRows = 0L
 
       val s2 = System.nanoTime()
       try
@@ -120,22 +115,20 @@ class ParquetAloneTest(fioOptions:FIOOptions, spark:SparkSession) extends FIOTes
           pageReadStore = parquetFileReader.readNextRowGroup()
           if (pageReadStore != null) {
             rowBatchesx+=1
-            readSoFarRows+=pageReadStore.getRowCount
             val colReader = new ColumnReadStoreImpl(pageReadStore, new DumpGroupConverter,
               schema, mdata.getCreatedBy)
             for(i <-0 until colDesc.size()){
-              consume(colReader, colDesc.get(i))
+              tempRows += consumeColumn(colReader, colDesc.get(i))
             }
+            readSoFarRows+=(tempRows / colDesc.size())
+            tempRows = 0L
           } else {
             contx = false
           }
         }
-      }
-      catch
-        {
-          case foo: Exception => foo.printStackTrace()
-        }
-      finally {
+      } catch {
+        case foo: Exception => foo.printStackTrace()
+      } finally {
         val s3 = System.nanoTime()
         parquetFileReader.close()
         val s4 = System.nanoTime()

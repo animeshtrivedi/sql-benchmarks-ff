@@ -59,7 +59,7 @@ public class FIOOptions extends TestOptions {
         this.withWarmup = false;
         this.inputFormatOptions = new HashMap<>(4);
         this.useFully = false;
-        this.parquetAloneVersion = 2;
+        this.parquetAloneVersion = 3;
         this.sparkFormat = "parquet";
 
         options.addOption("h", "help", false, "show help.");

@@ -3,7 +3,8 @@ package com.ibm.crail.benchmarks.fio
 import com.ibm.crail.benchmarks.{FIOOptions, Utils}
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.Path
-import org.apache.parquet.column.page.PageReadStore
+import org.apache.parquet.column.impl.{ColumnReadStoreImpl, ColumnReaderImpl}
+import org.apache.parquet.column.page.{PageReadStore, PageReader}
 import org.apache.parquet.example.data.simple.convert.GroupRecordConverter
 import org.apache.parquet.format.converter.ParquetMetadataConverter
 import org.apache.parquet.hadoop.metadata.ParquetMetadata
@@ -35,6 +36,63 @@ class ParquetAloneTest(fioOptions:FIOOptions, spark:SparkSession) extends FIOTes
 
   override final def execute(): String = if(fioOptions.getParquetAloneVersion == 1) executeV1() else executeV2()
 
+  def executeV3():String = {
+    rdd.foreach(fx =>{
+      val s1 = System.nanoTime()
+      val conf = new Configuration()
+      val path = new Path(fx._1)
+      val readFooter:ParquetMetadata = ParquetFileReader.readFooter(conf,
+        path,
+        ParquetMetadataConverter.NO_FILTER)
+      val mdata = readFooter.getFileMetaData
+      val schema:MessageType = mdata.getSchema
+      val colDesc = schema.getColumns
+      var pages:PageReadStore = null
+      val parquetFileReader = ParquetFileReader.open(conf, path)
+      val expectedRows = parquetFileReader.getRecordCount
+      var rowBatchesx = 0L
+      var readSoFarRows = 0L
+      val s2 = System.nanoTime()
+      try
+      {
+        var contx = true
+        while (contx) {
+          pages = parquetFileReader.readNextRowGroup()
+          if (pages != null) {
+            rowBatchesx+=1
+            ???
+          } else {
+            contx = false
+          }
+        }
+      }
+      catch
+        {
+          case foo: Exception => foo.printStackTrace()
+        }
+      finally {
+        val s3 = System.nanoTime()
+        parquetFileReader.close()
+        val s4 = System.nanoTime()
+        iotimeAcc.add(s3 - s2)
+        setuptimeAcc.add(s2 - s1)
+        setuptimeAcc.add(s4 - s3)
+        totalRowsAcc.add(readSoFarRows)
+        rowBatchesAcc.add(rowBatchesx)
+        require(readSoFarRows == expectedRows, " readSoFar " + readSoFarRows + " and expectedRows " + expectedRows + " do not match ")
+      }
+    })
+
+    "ParquetAloneTest V3 " + filesEnumerated.size +
+      " HDFS files in " + fioOptions.getInputLocations +
+      " directory (total bytes " + totalBytesExpected +
+      " ), total rows " + totalRowsAcc.value +
+      " , rowBatch " + rowBatchesAcc.value +
+      " , expected parquet RowGroup size is : " + (totalBytesExpected / rowBatchesAcc.value)
+  }
+
+  //https://www.programcreek.com/java-api-examples/index.php?api=parquet.hadoop.ParquetFileReader
+  // http://www.jofre.de/?p=1459
   def executeV2(): String = {
     rdd.foreach(fx =>{
       val s1 = System.nanoTime()

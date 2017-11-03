@@ -10,7 +10,9 @@ import org.apache.spark.sql.SparkSession
 /**
   * Created by atr on 02.11.17.
   */
-//https://github.com/animeshtrivedi/orc-bench/blob/master/pom.xml
+//https://github.com/animeshtrivedi/orc-bench/
+// Had look into ORCFileFormat in spark, they also do not support vectorized reading yet
+// https://issues.apache.org/jira/browse/SPARK-16060
 
 class ORCAloneTest(fioOptions:FIOOptions, spark:SparkSession) extends FIOTest {
 

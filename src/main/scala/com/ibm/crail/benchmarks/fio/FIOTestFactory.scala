@@ -50,7 +50,7 @@ object FIOTestFactory {
     } else if (fioOptions.isTestParquetAloneTest){
       new ParquetAloneTest(fioOptions, spark)
     } else if (fioOptions.isTestORCAloneTest){
-      new ORCAloneTest(fioOptions, spark)
+      new ORCVectorizedAloneTest(fioOptions, spark)
     } else if (fioOptions.isTestSparkReadTest){
       if(fioOptions.isSRTParquet){
         new ParquetSparkReadTest(fioOptions, spark)

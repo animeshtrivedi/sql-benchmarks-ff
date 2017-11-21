@@ -45,6 +45,7 @@ public class FIOOptions extends TestOptions {
     private boolean useFully;
     private int parquetAloneVersion;
     private String sparkFormat;
+    private int take;
 
     public FIOOptions(){
         options = new Options();
@@ -61,6 +62,7 @@ public class FIOOptions extends TestOptions {
         this.useFully = false;
         this.parquetAloneVersion = 3;
         this.sparkFormat = "parquet";
+        this.take = -1;
 
         options.addOption("h", "help", false, "show help.");
         options.addOption("i", "input", true, "[String] a location of input directory where files are read and written.");
@@ -76,6 +78,7 @@ public class FIOOptions extends TestOptions {
         options.addOption("r", "requestSize", true, "[Int] request size ");
         options.addOption("f", "fully", false, " for HdfsRead test, use the readfully code.");
         options.addOption("pv", "parquetalone", true, "[int] parquet alone test version, 1 or 2. default is :" + this.parquetAloneVersion);
+        options.addOption("x", "take", true, "[int] take 'n' elements out of the total file elements. default is :" + this.take);
     }
 
     @Override
@@ -127,6 +130,9 @@ public class FIOOptions extends TestOptions {
                         /* if parallelism is not set explicitly then default it here */
                         this.parallelism = this.numTasks;
                     }
+                }
+                if(cmd.hasOption("x")){
+                    this.take = Integer.parseInt(cmd.getOptionValue("x").trim());
                 }
                 if(cmd.hasOption("a")){
                     this.align = Integer.parseInt(cmd.getOptionValue("a").trim());
@@ -185,7 +191,6 @@ public class FIOOptions extends TestOptions {
     public boolean withWarmup() {
         return this.withWarmup;
     }
-
 
     public boolean isTestPaquetRead(){
         return this.test.compareToIgnoreCase("parquetread") == 0;
@@ -290,4 +295,7 @@ public class FIOOptions extends TestOptions {
         return this.parquetAloneVersion;
     }
 
+    public int getTake(){
+        return this.take;
+    }
 }

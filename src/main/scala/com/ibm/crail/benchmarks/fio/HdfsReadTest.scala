@@ -63,7 +63,8 @@ class HdfsReadTest(fioOptions:FIOOptions, spark:SparkSession) extends FIOTest {
     })
     require(totalBytesExpected == totalBytesRead.value,
       " Expected ( " + totalBytesExpected + " ) and read ( "+totalBytesRead.value+" ) bytes do not match ")
-    "ReadFully " + filesEnumerated.size + " HDFS files in " + fioOptions.getInputLocations + " directory, total size " + totalBytesRead.value + " bytes, align " + align
+    "ReadFully " + filesEnumerated.size + " HDFS files in " + fioOptions.getInputLocations + " directory, total size "
+    + totalBytesRead.value + " bytes, align " + align + " requestSize " + requestSize
   }
 
   def executeRead(): String = {
@@ -92,7 +93,9 @@ class HdfsReadTest(fioOptions:FIOOptions, spark:SparkSession) extends FIOTest {
     })
     require(totalBytesExpected == totalBytesRead.value,
       " Expected ( " + totalBytesExpected + " ) and read ( "+totalBytesRead.value+" ) bytes do not match ")
-    "Read w/o Fully " + filesEnumerated.size + " HDFS files in " + fioOptions.getInputLocations + " directory, total size " + totalBytesRead.value + " bytes, align " + align
+    "Read w/o Fully " + filesEnumerated.size + " HDFS files in " + fioOptions.getInputLocations +
+      " directory, total size " + totalBytesRead.value + " bytes, align " + align +
+      " requestSize " + requestSize
   }
 
   override def explain(): Unit = {}

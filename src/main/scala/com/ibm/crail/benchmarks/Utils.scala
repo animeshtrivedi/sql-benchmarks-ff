@@ -84,4 +84,18 @@ object Utils {
   val MILLISEC = 1000L
   val MICROSEC = MILLISEC * 1000L
   val NANOSEC = MICROSEC * 1000L
+
+  final val ANSI_RESET = "\u001B[0m"
+  final val ANSI_BLACK = "\u001B[30m"
+  final val ANSI_RED = "\u001B[31m"
+  final val ANSI_GREEN = "\u001B[32m"
+  final val ANSI_YELLOW = "\u001B[33m"
+  final val ANSI_BLUE = "\u001B[34m"
+  final val ANSI_PURPLE = "\u001B[35m"
+  final val ANSI_CYAN = "\u001B[36m"
+  final val ANSI_WHITE = "\u001B[37m"
+
+  def printRed(str:String):Unit = {
+    System.out.println(ANSI_RED + str + ANSI_RESET)
+  }
 }

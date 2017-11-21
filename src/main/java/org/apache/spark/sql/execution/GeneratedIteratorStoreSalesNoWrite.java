@@ -8,6 +8,7 @@ import org.apache.spark.sql.types.Decimal;
  */
 
 /* 005 */ public final class GeneratedIteratorStoreSalesNoWrite extends org.apache.spark.sql.execution.BufferedRowIterator {
+                private long _sum = 0;
     /* 006 */   private Object[] references;
     /* 007 */   private scala.collection.Iterator[] inputs;
     /* 008 */   private scala.collection.Iterator scan_input;
@@ -174,7 +175,29 @@ import org.apache.spark.sql.types.Decimal;
 /* 169 */         Decimal scan_value21 = scan_isNull21 ? null : (scan_colInstance21.getDecimal(scan_rowIdx, 7, 2));
 /* 170 */         boolean scan_isNull22 = scan_colInstance22.isNullAt(scan_rowIdx);
 /* 171 */         Decimal scan_value22 = scan_isNull22 ? null : (scan_colInstance22.getDecimal(scan_rowIdx, 7, 2));
-
+                this._sum+=scan_value;
+                this._sum+=scan_value1;
+                this._sum+=scan_value2;
+                this._sum+=scan_value3;
+                this._sum+=scan_value4;
+                this._sum+=scan_value5;
+                this._sum+=scan_value6;
+                this._sum+=scan_value7;
+                this._sum+=scan_value8;
+                this._sum+=scan_value9;
+                this._sum+=scan_value10;
+                this._sum+=scan_isNull11?0:scan_value11.toUnscaledLong();
+                this._sum+=scan_isNull12?0:scan_value12.toUnscaledLong();
+                this._sum+=scan_isNull13?0:scan_value13.toUnscaledLong();
+                this._sum+=scan_isNull14?0:scan_value14.toUnscaledLong();
+                this._sum+=scan_isNull15?0:scan_value15.toUnscaledLong();
+                this._sum+=scan_isNull16?0:scan_value16.toUnscaledLong();
+                this._sum+=scan_isNull17?0:scan_value17.toUnscaledLong();
+                this._sum+=scan_isNull18?0:scan_value18.toUnscaledLong();
+                this._sum+=scan_isNull19?0:scan_value19.toUnscaledLong();
+                this._sum+=scan_isNull20?0:scan_value20.toUnscaledLong();
+                this._sum+=scan_isNull21?0:scan_value21.toUnscaledLong();
+                this._sum+=scan_isNull22?0:scan_value22.toUnscaledLong();
 
 /* 311 */         append(scan_result);
 /* 312 */         if (shouldStop()) { scan_batchIdx = scan_rowIdx + 1; return; }
@@ -186,4 +209,7 @@ import org.apache.spark.sql.types.Decimal;
 /* 318 */     scan_scanTime.add(scan_scanTime1 / (1000 * 1000));
 /* 319 */     scan_scanTime1 = 0;
 /* 320 */   }
+public long getSum(){
+    return this._sum;
+}
 /* 321 */ }

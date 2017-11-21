@@ -98,6 +98,7 @@ class ParquetReadTest(fioOptions:FIOOptions, spark:SparkSession) extends FIOTest
         rowsx+=1
       }
       val s3 = System.nanoTime()
+      println(generatedIterator.asInstanceOf[GeneratedIteratorStoreSalesNoWrite].getSum)
       iotime.add(s3 -s2)
       setuptime.add(s2 -s1)
       totalRows.add(rowsx)

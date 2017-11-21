@@ -6,12 +6,19 @@ import org.apache.hadoop.conf.Configuration
 import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.catalyst.expressions.UnsafeRow
 import org.apache.spark.sql.execution.datasources.PartitionedFile
+import org.apache.spark.sql.simplefileformat.SimpleFileFormat
 import org.apache.spark.sql.sources.Filter
 /**
   * Created by atr on 12.10.17.
   */
 class SFFReadTest(fioOptions:FIOOptions, spark:SparkSession) extends FIOTest {
-  private val filesEnumerated = FIOUtils.enumerateWithSize(fioOptions.getInputLocations)
+  private val filesEnumerated = {
+    val x = FIOUtils.enumerateWithSize(fioOptions.getInputLocations)
+    if(fioOptions.getTake != -1)
+      x.take(fioOptions.getTake)
+    else
+      x
+  }
   println(filesEnumerated)
   var totalBytesExpected = 0L
   filesEnumerated.foreach(fx => {
@@ -64,7 +71,7 @@ class SFFReadTest(fioOptions:FIOOptions, spark:SparkSession) extends FIOTest {
       setuptime.add(s2 -s1)
       totalRows.add(rowsx)
     })
-    "SFF read " + filesEnumerated.size + " HDFS files in " + fioOptions.getInputLocations + " directory (total bytes " + totalBytesExpected + " ), total rows " + totalRows.value
+    "SFF read " + filesEnumerated.size + " HDFS files in " + fioOptions.getInputLocations + " directory (total bytes " + totalBytesExpected + " ), total rows " + totalRows.value + " take was " + filesEnumerated.size
   }
 
   override def explain(): Unit = {}

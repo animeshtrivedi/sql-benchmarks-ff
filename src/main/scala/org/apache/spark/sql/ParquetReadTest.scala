@@ -30,7 +30,7 @@ import org.apache.spark.sql.catalyst.expressions.UnsafeRow
 import org.apache.spark.sql.execution.datasources.RecordReaderIterator
 import org.apache.spark.sql.execution.datasources.parquet.VectorizedParquetRecordReader
 import org.apache.spark.sql.execution.metric.SQLMetric
-import org.apache.spark.sql.execution.{GeneratedIteratorIntWithPayload, GeneratedIteratorStoreSales, GeneratedIteratorStoreSalesNoWrite}
+import org.apache.spark.sql.execution.{GeneratedIteratorIntWithPayload, GeneratedIteratorStoreSalesNoWrite}
 
 /**
   * Created by atr on 12.10.17.

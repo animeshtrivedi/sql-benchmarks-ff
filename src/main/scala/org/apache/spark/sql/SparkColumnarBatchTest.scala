@@ -3,7 +3,7 @@ package org.apache.spark.sql
 import com.ibm.crail.benchmarks.fio.{FIOTest, FIOUtils}
 import com.ibm.crail.benchmarks.{FIOOptions, Utils}
 import org.apache.hadoop.conf.Configuration
-import org.apache.hadoop.fs.{FileStatus, FileSystem, Path}
+import org.apache.hadoop.fs.{FileSystem, Path}
 import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.execution.datasources.RecordReaderIterator
 import org.apache.spark.sql.execution.datasources.parquet.{ParquetFileFormat, VectorizedParquetRecordReader}

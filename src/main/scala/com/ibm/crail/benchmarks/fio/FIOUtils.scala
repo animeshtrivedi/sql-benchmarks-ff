@@ -2,18 +2,19 @@ package com.ibm.crail.benchmarks.fio
 
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FileStatus, Path}
+import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.simplefileformat.SimpleFileFormat
 import org.apache.spark.sql.types.StructType
-import org.apache.spark.sql.{SimpleFileFormat, SparkSession}
 
 /**
   * Created by atr on 12.10.17.
   */
 object FIOUtils {
 
-  val SFFMetadataExtension:String = "-mdata"
+  val SFFMetadataExtension:String = SimpleFileFormat.metadataExtension
 
   def isSFFMetaFile(path:String):Boolean = {
-    path.substring(path.length - SFFMetadataExtension.length, path.length).compareTo(SFFMetadataExtension) == 0
+    SimpleFileFormat.isStringPathMetaFile(path)
   }
 
   def ok(path:Path):Boolean = {

@@ -2,9 +2,10 @@ package org.apache.spark.sql.execution.datasources.sff
 
 import com.ibm.crail.benchmarks.FIOOptions
 import org.apache.spark.rdd.RDD
+import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.execution.datasources.{PartitionedFile, SparkFileFormatTest}
-import org.apache.spark.sql.{SimpleFileFormat, SparkSession}
+import org.apache.spark.sql.simplefileformat.SimpleFileFormat
 
 /**
   * Created by atr on 31.10.17.

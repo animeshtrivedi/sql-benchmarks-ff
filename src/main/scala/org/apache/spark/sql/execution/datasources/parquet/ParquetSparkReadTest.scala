@@ -1,6 +1,6 @@
 package org.apache.spark.sql.execution.datasources.parquet
 
-import com.ibm.crail.benchmarks.FIOOptions
+import com.ibm.crail.benchmarks.{FIOOptions, Utils}
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.catalyst.InternalRow
@@ -17,5 +17,11 @@ class ParquetSparkReadTest (fioOptions:FIOOptions, spark:SparkSession) extends S
 
   override def explain(): Unit = {}
 
-  override def plainExplain(): String = "ParquetSparkTest test \n WARNING: This shows the performance of reading columnarBatch."
+  override def plainExplain(): String = {
+    "ParquetSparkTest test \n" +
+      Utils.ANSI_RED +
+      "****\nWARNING: This shows the performance of reading columnarBatches, not individual rows.\n"+
+    "For row performance use the ParquetRead test, but that requires the WSCG code.\n****" +
+      Utils.ANSI_RESET
+  }
 }

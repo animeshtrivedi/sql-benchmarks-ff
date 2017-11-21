@@ -1,16 +1,14 @@
 package com.ibm.crail.benchmarks.fio
 
-import java.io.IOException
 import java.math.BigInteger
 import java.nio.charset.Charset
 
 import com.ibm.crail.benchmarks.{FIOOptions, Utils}
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.Path
-import org.apache.hadoop.io.UTF8
 import org.apache.parquet.column.ColumnReader
-import org.apache.parquet.column.impl.{ColumnReadStoreImpl, ColumnReaderImpl}
-import org.apache.parquet.column.page.{DataPage, PageReadStore, PageReader}
+import org.apache.parquet.column.impl.ColumnReadStoreImpl
+import org.apache.parquet.column.page.PageReadStore
 import org.apache.parquet.example.data.simple.convert.GroupRecordConverter
 import org.apache.parquet.format.converter.ParquetMetadataConverter
 import org.apache.parquet.hadoop.metadata.ParquetMetadata

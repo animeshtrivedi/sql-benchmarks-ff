@@ -91,6 +91,9 @@ object Main {
     sb.append(test.printAdditionalInformation(lapsedTimeInNanosec))
     sb.append("-------------------------------------------\n")
     println(sb.mkString)
+    println("Holding it ...")
+
+    System.in.read()
 
     spark.stop()
   }

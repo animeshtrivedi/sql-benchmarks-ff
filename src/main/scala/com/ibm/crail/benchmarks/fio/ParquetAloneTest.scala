@@ -175,7 +175,7 @@ class ParquetAloneTest(fioOptions:FIOOptions, spark:SparkSession) extends FIOTes
             var columnIO: MessageColumnIO = new ColumnIOFactory().getColumnIO(schema)
             val recordReader = columnIO.getRecordReader(pages, new GroupRecordConverter(schema))
             for (i <- 0L until rows) {
-              val encodedRow = recordReader.read()
+              val encodedRow = recordReader.read().asGroup()
               // here we can convert it to raw values
               readSoFarRows+=1
             }

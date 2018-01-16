@@ -9,6 +9,7 @@ import org.apache.spark.sql.types.Decimal;
 
 /* 005 */ public final class GeneratedIteratorStoreSalesNoWrite extends org.apache.spark.sql.execution.BufferedRowIterator {
                 private long _sum = 0;
+    private long _validDecimal = 0;
     /* 006 */   private Object[] references;
     /* 007 */   private scala.collection.Iterator[] inputs;
     /* 008 */   private scala.collection.Iterator scan_input;
@@ -186,18 +187,18 @@ import org.apache.spark.sql.types.Decimal;
                 this._sum+=scan_value8;
                 this._sum+=scan_value9;
                 this._sum+=scan_value10;
-                this._sum+=scan_isNull11?0:scan_value11.toUnscaledLong();
-                this._sum+=scan_isNull12?0:scan_value12.toUnscaledLong();
-                this._sum+=scan_isNull13?0:scan_value13.toUnscaledLong();
-                this._sum+=scan_isNull14?0:scan_value14.toUnscaledLong();
-                this._sum+=scan_isNull15?0:scan_value15.toUnscaledLong();
-                this._sum+=scan_isNull16?0:scan_value16.toUnscaledLong();
-                this._sum+=scan_isNull17?0:scan_value17.toUnscaledLong();
-                this._sum+=scan_isNull18?0:scan_value18.toUnscaledLong();
-                this._sum+=scan_isNull19?0:scan_value19.toUnscaledLong();
-                this._sum+=scan_isNull20?0:scan_value20.toUnscaledLong();
-                this._sum+=scan_isNull21?0:scan_value21.toUnscaledLong();
-                this._sum+=scan_isNull22?0:scan_value22.toUnscaledLong();
+                if(!scan_isNull11){this._sum+=scan_value11.toUnscaledLong(); this._validDecimal+=1;}
+                if(!scan_isNull12){this._sum+=scan_value12.toUnscaledLong(); this._validDecimal+=1;}
+                if(!scan_isNull13){this._sum+=scan_value13.toUnscaledLong(); this._validDecimal+=1;}
+                if(!scan_isNull14){this._sum+=scan_value14.toUnscaledLong(); this._validDecimal+=1;}
+                if(!scan_isNull15){this._sum+=scan_value15.toUnscaledLong(); this._validDecimal+=1;}
+                if(!scan_isNull16){this._sum+=scan_value16.toUnscaledLong(); this._validDecimal+=1;}
+                if(!scan_isNull17){this._sum+=scan_value17.toUnscaledLong(); this._validDecimal+=1;}
+                if(!scan_isNull18){this._sum+=scan_value18.toUnscaledLong(); this._validDecimal+=1;}
+                if(!scan_isNull19){this._sum+=scan_value19.toUnscaledLong(); this._validDecimal+=1;}
+                if(!scan_isNull20){this._sum+=scan_value20.toUnscaledLong(); this._validDecimal+=1;}
+                if(!scan_isNull21){this._sum+=scan_value21.toUnscaledLong(); this._validDecimal+=1;}
+                if(!scan_isNull22){this._sum+=scan_value22.toUnscaledLong(); this._validDecimal+=1;}
 
 /* 311 */         append(scan_result);
 /* 312 */         if (shouldStop()) { scan_batchIdx = scan_rowIdx + 1; return; }
@@ -212,4 +213,8 @@ import org.apache.spark.sql.types.Decimal;
 public long getSum(){
     return this._sum;
 }
+    public long getValid(){
+        return this._validDecimal;
+    }
+
 /* 321 */ }

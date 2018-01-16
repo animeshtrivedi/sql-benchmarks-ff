@@ -36,7 +36,6 @@ public class FIOOptions extends TestOptions {
     private boolean withWarmup;
     private String test;
     private Map<String, String> inputFormatOptions; // input format options
-    private Map<String, String> outputFormatOptions; // output format options
     private int parallelism; // spark parallelization
     private int numTasks;
     private long sizePerTask; // valid for writing
@@ -46,6 +45,9 @@ public class FIOOptions extends TestOptions {
     private int parquetAloneVersion;
     private String sparkFormat;
     private int take;
+    private String outputFormat;
+    private Map<String, String> outputFormatOptions; // output format options
+    private String outputFile;
 
     public FIOOptions(){
         options = new Options();
@@ -59,15 +61,18 @@ public class FIOOptions extends TestOptions {
         this.requetSize = 1024 * 1024; // 1MB
         this.withWarmup = false;
         this.inputFormatOptions = new HashMap<>(4);
+        this.outputFormatOptions = new HashMap<>(4);
         this.useFully = false;
         this.parquetAloneVersion = 3;
         this.sparkFormat = "parquet";
         this.take = -1;
+        this.outputFormat = "parquet";
+        this.outputFile = "/datagen-output";
 
         options.addOption("h", "help", false, "show help.");
         options.addOption("i", "input", true, "[String] a location of input directory where files are read and written.");
         options.addOption("w", "warmupInput", true, "[String,...] a list of input files/directory used for warmup. Same semantics as the -i flag.");
-        options.addOption("t", "test", true, "[String] which test to perform, HdfsRead, HdfsWrite, ParquetRead, ParquetWrite, SFFRead, SFFWrite, IteratorRead, SparkColumnarBatchRead, ParquetRowGroupTest, ParquetAloneTest, ORCAloneTest or SparkRead (see -sf). Default " + this.test);
+        options.addOption("t", "test", true, "[String] which test to perform, HdfsRead, HdfsWrite, ParquetRead, ParquetWrite, SFFRead, SFFWrite, IteratorRead, SparkColumnarBatchRead, ParquetRowGroupTest, ParquetAloneTest, ORCAloneTest or SparkRead (see -sf), DataGeneration. Default " + this.test);
         options.addOption("sf", "sparkFormatTest", true, "[String] which spark reading test to perform, ORC, parquet, json, avro, null, or sff. Default " + this.sparkFormat);
         options.addOption("ifo", "inputFormatOptions", true, "input format options as key0,value0,key1,value1...");
         options.addOption("so", "sparkOptions", true, "[<String,String>,...] options to set on SparkConf, NYI");
@@ -79,6 +84,9 @@ public class FIOOptions extends TestOptions {
         options.addOption("f", "fully", false, " for HdfsRead test, use the readfully code.");
         options.addOption("pv", "parquetalone", true, "[int] parquet alone test version, 1 or 2. default is :" + this.parquetAloneVersion);
         options.addOption("x", "take", true, "[int] take 'n' elements out of the total file elements. default is :" + this.take);
+        options.addOption("ofo", "outputFormatOptions", true, "[<String,String>,...] options to send to the output format in DataGeneration writing");
+        options.addOption("of", "outputFormat", true, "[string] in spark, what is the output format? Used for DataGeneration :" + this.outputFormat);
+        options.addOption("o", "output", true, "[string] output location for DataGeneration default:" + this.outputFile);
     }
 
     @Override
@@ -159,7 +167,7 @@ public class FIOOptions extends TestOptions {
         }
         if(!(isTestHdfsRead() || isTestHdfsWrite() || isTestPaquetRead() || isTestSFFRead() || isTestIteratorRead()
                 || isTestSparkColumnarBatchReadTest() || isTestParquetRowGroupTest() || isTestParquetAloneTest()
-                || isTestSparkReadTest() || isTestORCAloneTest())) {
+                || isTestSparkReadTest() || isTestORCAloneTest() || isTestDataGenerationTest())) {
             errorAbort("Illegal test name for FIO : " + this.test);
             if(isTestSparkReadTest()){
                 if(!(isSRTParquet() || isSRTORC() || isSRTJson() || isSRTNull() || isSRTSFF() || isSRTAvro())){
@@ -167,7 +175,7 @@ public class FIOOptions extends TestOptions {
                 }
             }
         }
-        if(this.inputLocations == null && !(isTestIteratorRead() || (isTestSparkReadTest() && isSRTNull()))){
+        if(this.inputLocations == null && !(isTestDataGenerationTest() || isTestIteratorRead() || (isTestSparkReadTest() && isSRTNull()))){
             // iterator read does not need a input file location
             errorAbort("Please specify input location with -i");
         }
@@ -251,6 +259,10 @@ public class FIOOptions extends TestOptions {
         return this.sparkFormat.compareToIgnoreCase("avro") == 0;
     }
 
+    public boolean isTestDataGenerationTest(){
+        return this.test.compareToIgnoreCase("datageneration") == 0;
+    }
+
     public String getInputLocations(){
         return this.inputLocations;
     }
@@ -297,5 +309,17 @@ public class FIOOptions extends TestOptions {
 
     public int getTake(){
         return this.take;
+    }
+
+    public String getOutputFormat(){
+        return this.outputFormat;
+    }
+
+    public Map<String, String> getOutputFormatOptions(){
+        return this.outputFormatOptions;
+    }
+
+    public String getOutputFile(){
+        return this.outputFile;
     }
 }

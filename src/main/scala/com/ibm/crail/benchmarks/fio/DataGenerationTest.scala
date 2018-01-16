@@ -12,18 +12,11 @@ class DataGenerationTest (fioOptions:FIOOptions, spark:SparkSession) extends FIO
 
   private val rdd = spark.range(0, fioOptions.getNumTasks)
 
-  override def execute(): String = {
-    rdd.foreach( longNumber => {
-
-    })
-
-  }
+  override def execute(): String = ???
 
   override def explain(): Unit = ???
 
   override def plainExplain(): String = ???
 
-  override def printAdditionalInformation(timelapsedinNanosec:Long): String ={
-
-  }
+  override def printAdditionalInformation(timelapsedinNanosec:Long): String = ???
 }

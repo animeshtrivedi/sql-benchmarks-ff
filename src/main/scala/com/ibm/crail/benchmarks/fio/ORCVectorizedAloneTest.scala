@@ -65,7 +65,8 @@ class ORCVectorizedAloneTest (fioOptions:FIOOptions, spark:SparkSession) extends
         val decimalVector10: DecimalColumnVector = colsArr(21).asInstanceOf[DecimalColumnVector]
         val decimalVector11: DecimalColumnVector = colsArr(22).asInstanceOf[DecimalColumnVector]
         // +12 decimal = 23 columns
-        for (i <- 0 until batch.size) {
+        var i = 0
+        while (i < batch.size) {
           val intVal0 = intVector0.vector(i)
           val intVal1 = intVector1.vector(i)
           val intVal2 = intVector2.vector(i)
@@ -93,6 +94,7 @@ class ORCVectorizedAloneTest (fioOptions:FIOOptions, spark:SparkSession) extends
           val decimalVal11 = decimalVector11.vector(i)
 
           rowCount += 1
+          i+=1
         }
       }
       val s3 = System.nanoTime()

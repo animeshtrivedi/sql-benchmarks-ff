@@ -10,13 +10,17 @@ import org.apache.spark.sql.SparkSession
   */
 class HdfsWriteTest (fioOptions:FIOOptions, spark:SparkSession) extends FIOTest  {
   val baseName = "/hdfsfile"
-  private val fullPathFileNames = {
-    for (i <- 0 until fioOptions.getNumTasks) yield fioOptions.getInputLocations + baseName + i
+  private val fullPathFileNames = new Array[String](fioOptions.getNumTasks)
+  private var i = 0
+  while (i < fioOptions.getNumTasks){
+    fullPathFileNames(i) = fioOptions.getInputLocations + baseName + i
+    i+=1
   }
   private val iotime = spark.sparkContext.longAccumulator("iotime")
   private val setuptime = spark.sparkContext.longAccumulator("setuptime")
   private val requestSize = fioOptions.getRequetSize
   private val times = fioOptions.getSizePerTask / requestSize
+  //todo: what kind of performance penality happens here to convert an array to sequence?
   private val rdd = spark.sparkContext.parallelize(fullPathFileNames, fioOptions.getParallelism)
 
   override def execute(): String = {
@@ -31,8 +35,10 @@ class HdfsWriteTest (fioOptions:FIOOptions, spark:SparkSession) extends FIOTest 
       val buffer = new Array[Byte](requestSize)
 
       val s2 = System.nanoTime()
-      for ( i <- 0L until times){
+      var i = 0L
+      while ( i < times){
         ostream.write(buffer)
+        i+=1
       }
       // flushes the client buffer
       ostream.hflush()
@@ -47,7 +53,7 @@ class HdfsWriteTest (fioOptions:FIOOptions, spark:SparkSession) extends FIOTest 
       setuptime.add(s2 -s1)
       setuptime.add(s4 -s3)
     })
-    "Wrote " + fullPathFileNames.size + " HDFS files in " + fioOptions.getInputLocations + " directory, each size " + fioOptions.getSizePerTask + " bytes"
+    "Wrote " + fullPathFileNames.length + " HDFS files in " + fioOptions.getInputLocations + " directory, each size " + fioOptions.getSizePerTask + " bytes"
   }
 
   override def explain(): Unit ={}

@@ -72,7 +72,8 @@ class ParquetAloneTest(fioOptions:FIOOptions, spark:SparkSession) extends FIOTes
         val dmax = column.getMaxDefinitionLevel
         val creader:ColumnReader = crstore.getColumnReader(column)
         val rows = creader.getTotalValueCount
-        for (i <- 0L until rows){
+        var i = 0L
+        while (i < rows){
           val rvalue = creader.getCurrentRepetitionLevel
           val dvalue = creader.getCurrentDefinitionLevel
           if(rvalue == dvalue) {
@@ -100,6 +101,7 @@ class ParquetAloneTest(fioOptions:FIOOptions, spark:SparkSession) extends FIOTes
             }
           }
           creader.consume()
+          i+=1
         }
         rows
       }
@@ -115,8 +117,10 @@ class ParquetAloneTest(fioOptions:FIOOptions, spark:SparkSession) extends FIOTes
             rowBatchesx+=1
             val colReader = new ColumnReadStoreImpl(pageReadStore, new DumpGroupConverter,
               schema, mdata.getCreatedBy)
-            for(i <-0 until colDesc.size()){
+            var i = 0
+            while(i < colDesc.size()){
               tempRows += consumeColumn(colReader, colDesc.get(i))
+              i+=1
             }
             readSoFarRows+=(tempRows / colDesc.size())
             tempRows = 0L
@@ -174,10 +178,12 @@ class ParquetAloneTest(fioOptions:FIOOptions, spark:SparkSession) extends FIOTes
             val rows = pages.getRowCount
             var columnIO: MessageColumnIO = new ColumnIOFactory().getColumnIO(schema)
             val recordReader = columnIO.getRecordReader(pages, new GroupRecordConverter(schema))
-            for (i <- 0L until rows) {
+            var i = 0L
+            while (i < rows) {
               val encodedRow = recordReader.read().asGroup()
               // here we can convert it to raw values
               readSoFarRows+=1
+              i+=1
             }
           } else {
             contx = false

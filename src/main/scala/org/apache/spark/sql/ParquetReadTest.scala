@@ -58,11 +58,13 @@ class ParquetReadTest(fioOptions:FIOOptions, spark:SparkSession) extends FIOTest
     val parquetReader = ParquetFileReader.open(conf, new Path(filesEnumerated.head._1))
     val schema = parquetReader.getFooter.getFileMetaData.getSchema
     val listPath = schema.getPaths
-    for(a <- 0 until listPath.size()){
+    var a = 0
+    while(a < listPath.size()){
       val arr = listPath.get(a)
       arr.foreach(p => {
         columnNames += p
       })
+      a+=1
     }
     println("Detected Column names: " + columnNames)
   }

@@ -43,14 +43,15 @@ class TPCDSTest (val sqlOptions: SQLOptions, spark:SparkSession) extends SQLTest
   }
 
   override def execute(): String = {
-    // notice "until"
     var elapsedTime = 0L
-    for( i <- 0 until result.length) {
+    var i = 0
+    while ( i < result.length) {
       val s = System.nanoTime()
       takeAction(sqlOptions, result(i).df, "/"+result(i).queryName)
       time(i) = System.nanoTime() - s
       elapsedTime+=time(i)
       println((i + 1) + "/" + result.length + " executed query : " + result(i).queryName + " on " + sqlOptions.getInputFiles()(0) + " took " + time(i)/1000000 + " msec | elapsedTime : " + elapsedTime / 1000000 + " msec ")
+      i+=1
     }
     s"${sqlOptions.getAction.toString} for TPCDS"
   }

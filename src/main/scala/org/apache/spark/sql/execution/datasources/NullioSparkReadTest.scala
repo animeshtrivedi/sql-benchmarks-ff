@@ -30,7 +30,12 @@ class NullioSparkReadTest (fioOptions:FIOOptions, spark:SparkSession) extends Sp
     val func = fileFormat.buildReader(spark, schema, null, schema, Seq(), options.toMap, conf)
     val rowSize = fileFormat.getSchemaRowSize(options.toMap)
     totalPerExecutorSize = rowSize * options.get(NullFileFormat.KEY_INPUT_ROWS).toLong
-    val lx = for (i <- 0 until fioOptions.getNumTasks) yield (func, "", totalPerExecutorSize)
+    val lx = new Array[Tuple3[PartitionedFile => Iterator[InternalRow], String, Long]](fioOptions.getNumTasks)
+    var i = 0
+    while (i < fioOptions.getNumTasks){
+      lx(i) = (func, "", totalPerExecutorSize)
+      i+=1
+    }
     spark.sparkContext.parallelize(lx, fioOptions.getNumTasks)
   }
 

@@ -42,8 +42,11 @@ class ReadOnly(val sqlOptions: SQLOptions, spark:SparkSession) extends SQLTest(s
 
   // we then make a union of them
   var finalDataset:Dataset[Row] = readDataSetArr(0)
-  for(i <- 1 until readDataSetArr.length){
+  // re-use "i"
+  i = 1
+  while (i < readDataSetArr.length){
     finalDataset = readDataSetArr(i).union(finalDataset)
+    i+=1
   }
 
   // we do cache here, because now any action will trigger the whole data set reading

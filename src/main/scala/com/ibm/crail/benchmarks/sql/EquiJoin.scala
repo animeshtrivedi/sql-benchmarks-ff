@@ -30,7 +30,9 @@ class EquiJoin(val sqlOptions: SQLOptions, spark:SparkSession) extends SQLTest(s
   private val f1 = spark.read.format(sqlOptions.getInputFormat).options(sqlOptions.getInputFormatOptions).load(file1)
   private val f2 = spark.read.format(sqlOptions.getInputFormat).options(sqlOptions.getInputFormatOptions).load(file2)
   private val key = sqlOptions.getJoinKey
-  private val result = f1.joinWith(f2, f1(key) === f2(key))
+  //private val result = f1.joinWith(f2, f1(key) === f2(key))
+  // to make schema flat
+  private val result = f1.joinWith(f2, f1(key) === f2(key)).select("_1.intKey", "_1.payload", "_2.payload")
 
   override def execute(): String = takeAction(sqlOptions, result)
 

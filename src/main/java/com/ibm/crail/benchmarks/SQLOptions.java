@@ -48,6 +48,7 @@ public class SQLOptions extends TestOptions {
     private String outputFormat;
     private Map<String, String> inputFormatOptions;
     private Map<String, String> outputFormatOptions;
+    private int startIdx, endIdx;
     private boolean verbose;
 
     public SQLOptions(){
@@ -67,6 +68,7 @@ public class SQLOptions extends TestOptions {
         options.addOption("ifo", "inputFormatOptions", true, "input format options as key0,value0,key1,value1...");
         options.addOption("of", "outputFormat", true, "output format (where-ever applicable) default: parquet");
         options.addOption("ofo", "outputFormatOptions", true, "output format options as key0,value0,key1,value1...");
+        options.addOption("qr", "queryRange", true, "run tpcds queries from index x-y, vali ranges are (0-104)=>means all");
 
         // set defaults
         this.joinKey = "intKey";
@@ -76,6 +78,8 @@ public class SQLOptions extends TestOptions {
         this.action = new Count();
         this.doWarmup = false;
         this.tpcdsQuery = null;
+        this.startIdx = 0;
+        this.endIdx = 104;
 
         this.inputFormatOptions = new HashMap<>(4);
         this.outputFormatOptions = new HashMap<>(4);
@@ -130,6 +134,16 @@ public class SQLOptions extends TestOptions {
                         this.outputFormatOptions.put(one[i].trim(), one[i + 1].trim());
                     }
                 }
+
+                if (cmd.hasOption("qr")) {
+                    String[] one = cmd.getOptionValue("qr").trim().split(",");
+                    if (one.length != 2) {
+                        errorAbort("Illegal format for queryRange, number of parameters " + one.length + " are not even. We expect 2 integers x,y");
+                    }
+                    this.startIdx = Integer.parseInt(one[0]);
+                    this.endIdx = Integer.parseInt(one[1]);
+                }
+
                 if (cmd.hasOption("ifo")) {
                     String[] one = cmd.getOptionValue("ifo").trim().split(",");
                     if (one.length % 2 != 0) {
@@ -270,5 +284,12 @@ public class SQLOptions extends TestOptions {
 
     public String getTPCDSQuery(){
         return this.tpcdsQuery;
+    }
+
+    public int getStartIdx(){
+        return this.startIdx;
+    }
+    public int getEndIdx(){
+        return this.endIdx;
     }
 }

@@ -33,11 +33,12 @@ class TPCDSTest (val sqlOptions: SQLOptions, spark:SparkSession) extends SQLTest
   TPCDSSetup.readAndRegisterTempTables(sqlOptions, spark)
   // we need 100 queries
   case class ResultWithQuery(df:DataFrame, queryName:String)
+  private val selectedQueries = TPCDSQueries.query //.slice(sqlOptions.getStartIdx, sqlOptions.getEndIdx)
 
-  private val result:Array[ResultWithQuery] = new Array[ResultWithQuery](TPCDSQueries.query.size)
-  private var time:Array[Long] = new Array[Long](TPCDSQueries.query.size)
+  private val result:Array[ResultWithQuery] = new Array[ResultWithQuery](selectedQueries.size)
+  private var time:Array[Long] = new Array[Long](selectedQueries.size)
   private var i:Int = 0
-  for ((k,v) <- TPCDSQueries.query) {
+  for ((k,v) <- selectedQueries) {
     result(i) = new ResultWithQuery(spark.sql(v), k)
     i+=1
   }
@@ -46,11 +47,15 @@ class TPCDSTest (val sqlOptions: SQLOptions, spark:SparkSession) extends SQLTest
     var elapsedTime = 0L
     var i = 0
     while ( i < result.length) {
-      val s = System.nanoTime()
-      takeAction(sqlOptions, result(i).df, "/"+result(i).queryName)
-      time(i) = System.nanoTime() - s
-      elapsedTime+=time(i)
-      println((i + 1) + "/" + result.length + " executed query : " + result(i).queryName + " on " + sqlOptions.getInputFiles()(0) + " took " + time(i)/1000000 + " msec | elapsedTime : " + elapsedTime / 1000000 + " msec ")
+      if(result(i).queryName.compareToIgnoreCase("q72.sql") != 0) {
+        val s = System.nanoTime()
+        takeAction(sqlOptions, result(i).df, "/" + result(i).queryName)
+        time(i) = System.nanoTime() - s
+        elapsedTime += time(i)
+        println((i + 1) + "/" + result.length + " executed query : " + result(i).queryName + " on " + sqlOptions.getInputFiles()(0) + " took " + time(i) / 1000000 + " msec | elapsedTime : " + elapsedTime / 1000000 + " msec ")
+      } else {
+        println((i + 1) + "/" + result.length + " SKIPPED query : " + result(i).queryName + " on " + sqlOptions.getInputFiles()(0) + " | elapsedTime : " + elapsedTime / 1000000 + " msec ")
+      }
       i+=1
     }
     s"${sqlOptions.getAction.toString} for TPCDS"
@@ -63,7 +68,7 @@ class TPCDSTest (val sqlOptions: SQLOptions, spark:SparkSession) extends SQLTest
   override def printAdditionalInformation(timelapsedinNanosec:Long):String = {
     val sb = new StringBuilder
     i = 0
-    for ((k,v) <- TPCDSQueries.query){
+    for ((k,v) <- selectedQueries){
       sb.append(" query " + k + " took : " + (time(i) / 1000000) + " msec\n")
       i+=1
     }

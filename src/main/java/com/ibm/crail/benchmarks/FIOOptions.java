@@ -76,7 +76,7 @@ public class FIOOptions extends TestOptions {
         options.addOption("sf", "sparkFormatTest", true, "[String] which spark reading test to perform, ORC, parquet, json, avro, null, or sff. Default " + this.sparkFormat);
         options.addOption("ifo", "inputFormatOptions", true, "input format options as key0,value0,key1,value1...");
         options.addOption("so", "sparkOptions", true, "[<String,String>,...] options to set on SparkConf, NYI");
-        options.addOption("n", "numTasks", true, "[Int] number of tasks");
+        options.addOption("n", "numTasks", true, "[Int] number of tasks, default: " + this.numTasks);
         options.addOption("p", "parallel", true, "[Int] amoount of parallelism in terms of parallel spark tasks. Default: = numTasks");
         options.addOption("s", "size", true, "[Long] size per task. Takes prefixes like k, m, g, t");
         options.addOption("a", "align", true, "[Int] alignment");

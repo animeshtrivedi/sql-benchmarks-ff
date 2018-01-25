@@ -11,15 +11,13 @@ import org.apache.spark.sql.types.StructType
   */
 object FIOUtils {
 
-  val SFFMetadataExtension:String = SimpleFileFormat.metadataExtension
-
-  def isSFFMetaFile(path:String):Boolean = {
-    SimpleFileFormat.isStringPathMetaFile(path)
-  }
-
   def ok(path:Path):Boolean = {
     val fname = path.getName
-    fname(0) != '_' && fname(0) != '.' && !isSFFMetaFile(fname)
+    fname(0) != '_' && fname(0) != '.'
+  }
+
+  def okOnFileStatus(fileStatus: FileStatus):Boolean = {
+    ok(fileStatus.getPath)
   }
 
   def process(fileNames:Array[String]):(List[String], Long) = {
@@ -61,7 +59,7 @@ object FIOUtils {
     val conf = new Configuration()
     val fileSystem = path.getFileSystem(conf)
     // we get the file system
-    val fileStatus:Array[FileStatus]  = fileSystem.listStatus(path)
+    val fileStatus:Array[FileStatus]  = fileSystem.listStatus(path).filter(okOnFileStatus)
     val sff = new SimpleFileFormat
     sff.inferSchema(spark, Map[String, String](), fileStatus)
   }

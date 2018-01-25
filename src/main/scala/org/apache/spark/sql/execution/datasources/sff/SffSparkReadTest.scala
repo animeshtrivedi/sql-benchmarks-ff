@@ -14,7 +14,7 @@ class SffSparkReadTest (fioOptions:FIOOptions, spark:SparkSession) extends Spark
   /* here we do file format specific initialization */
   private val fileFormat = new SimpleFileFormat()
   override final val rdd:RDD[((PartitionedFile) => Iterator[InternalRow] , String, Long)] =
-    transformFilesToRDD(fileFormat, fileFormat.buildReader)
+    transformFilesToRDD(fileFormat, fileFormat.buildReaderWithPartitionValues)
 
   override def explain(): Unit = {}
 

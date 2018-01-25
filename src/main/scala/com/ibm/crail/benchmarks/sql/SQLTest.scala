@@ -86,6 +86,14 @@ abstract class SQLTest(val spark: SparkSession)  extends BaseTest {
     (finalDs, renamed)
   }
 
+  // example of a function that can be applied to a row
+  def calc(row:org.apache.spark.sql.Row):(Int, Int, Int) = {
+    val i1 = row.getInt(0)
+    val bin1 = row.get(1).asInstanceOf[Array[Byte]]
+    val bin2 = row.get(2).asInstanceOf[Array[Byte]]
+    (i1, bin1.hashCode(), bin2.hashCode())
+  }
+
   private def sanitizeColumnNames(input:Dataset[_]):(Dataset[_], Option[String]) = {
     // first eliminate illegal names
     val step1 = eliminateIllegalColumnNames(input)

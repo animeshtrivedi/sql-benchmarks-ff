@@ -32,23 +32,13 @@ class SFFReadTest(fioOptions:FIOOptions, spark:SparkSession) extends FIOTest {
   private val inputDir = fioOptions.getInputLocations
 
   override def execute(): String = {
-    /**
-      * A part (i.e. "block") of a single file that should be read, along with partition column values
-      * that need to be prepended to each row.
-      *
-      * @param partitionValues value of partition columns to be prepended to each row.
-      * @param filePath path of the file to read
-      * @param start the beginning offset (in bytes) of the block.
-      * @param length number of bytes to read.
-      * @param locations locality information (list of nodes that have the data).
-      */
 
     rdd.foreach(fx =>{
       val s1 = System.nanoTime()
       val sff = new SimpleFileFormat
       val schema = FIOUtils.inferSFFSchema(inputDir, spark)
       val conf = new Configuration()
-      val readerFunc = sff.buildReader(spark,
+      val readerFunc = sff.buildReaderWithPartitionValues(spark,
         schema.get,
         null,
         schema.get,

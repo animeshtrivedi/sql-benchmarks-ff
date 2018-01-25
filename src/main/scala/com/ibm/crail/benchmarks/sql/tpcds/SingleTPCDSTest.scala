@@ -30,8 +30,8 @@ import org.apache.spark.sql.SparkSession
 class SingleTPCDSTest(val sqlOptions: SQLOptions, spark:SparkSession) extends SQLTest(spark) {
   // you set up the temp view
   TPCDSSetup.readAndRegisterTempTables(sqlOptions, spark)
-  private val query = TPCDSQueries.query(sqlOptions.getTPCDSQuery+".sql")
-  private val result = spark.sql(query)
+  private val query = TPCDSQueries.lookup(sqlOptions.getTPCDSQuery+".sql")
+  private val result = spark.sql(query.query)
 
   override def execute(): String = takeAction(sqlOptions, result)
 
@@ -39,6 +39,6 @@ class SingleTPCDSTest(val sqlOptions: SQLOptions, spark:SparkSession) extends SQ
 
   override def plainExplain(): String = s"TPC-DS query ${sqlOptions.getTPCDSQuery} on " + sqlOptions.getInputFiles()(0)
 
-  override def printAdditionalInformation(timelapsedinNanosec:Long): String = s"SQL query ${sqlOptions.getTPCDSQuery}: ${query}"
+  override def printAdditionalInformation(timelapsedinNanosec:Long): String = s"SQL query ${sqlOptions.getTPCDSQuery}: ${query.query}"
 
 }

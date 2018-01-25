@@ -33,13 +33,14 @@ class TPCDSTest (val sqlOptions: SQLOptions, spark:SparkSession) extends SQLTest
   TPCDSSetup.readAndRegisterTempTables(sqlOptions, spark)
   // we need 100 queries
   case class ResultWithQuery(df:DataFrame, queryName:String)
-  private val selectedQueries = TPCDSQueries.query //.slice(sqlOptions.getStartIdx, sqlOptions.getEndIdx)
+  private val selectedQueries = TPCDSQueries.queries.slice(sqlOptions.getStartIdx, sqlOptions.getEndIdx)
 
-  private val result:Array[ResultWithQuery] = new Array[ResultWithQuery](selectedQueries.size)
-  private var time:Array[Long] = new Array[Long](selectedQueries.size)
+  private val result:Array[ResultWithQuery] = new Array[ResultWithQuery](selectedQueries.length)
+  private var time:Array[Long] = new Array[Long](selectedQueries.length)
   private var i:Int = 0
-  for ((k,v) <- selectedQueries) {
-    result(i) = new ResultWithQuery(spark.sql(v), k)
+  while (i <  selectedQueries.length) {
+    val q = selectedQueries(i)
+    result(i) = ResultWithQuery(spark.sql(q.query), q.id)
     i+=1
   }
 
@@ -68,8 +69,9 @@ class TPCDSTest (val sqlOptions: SQLOptions, spark:SparkSession) extends SQLTest
   override def printAdditionalInformation(timelapsedinNanosec:Long):String = {
     val sb = new StringBuilder
     i = 0
-    for ((k,v) <- selectedQueries){
-      sb.append(" query " + k + " took : " + (time(i) / 1000000) + " msec\n")
+    while (i < selectedQueries.length){
+      val q = selectedQueries(i)
+      sb.append(" query " + q.id + " took : " + (time(i) / 1000000) + " msec\n")
       i+=1
     }
     sb.mkString

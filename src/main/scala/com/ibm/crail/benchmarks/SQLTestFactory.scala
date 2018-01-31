@@ -21,7 +21,7 @@
 package com.ibm.crail.benchmarks
 
 import com.ibm.crail.benchmarks.sql.tpcds.{SingleTPCDSTest, TPCDSTest}
-import com.ibm.crail.benchmarks.sql.{EquiJoin, ReadOnly, SQLTest}
+import com.ibm.crail.benchmarks.sql.{EquiJoin, ReadOnly, SQLTest, Selectivity}
 import org.apache.spark.sql.SparkSession
 
 object SQLTestFactory {
@@ -35,8 +35,10 @@ object SQLTestFactory {
       new TPCDSTest(sqlOptions, spark)
     } else if (sqlOptions.isTestReadOnly) {
       new ReadOnly(sqlOptions, spark)
+    } else if (sqlOptions.isTestSelectivity) {
+      new Selectivity(sqlOptions, spark)
     } else {
-      throw new Exception("Illegal test name ")
+      throw new Exception("Illegal test name")
     }
   }
 }

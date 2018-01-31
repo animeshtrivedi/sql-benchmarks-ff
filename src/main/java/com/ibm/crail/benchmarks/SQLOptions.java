@@ -50,11 +50,12 @@ public class SQLOptions extends TestOptions {
     private Map<String, String> outputFormatOptions;
     private int startIdx, endIdx;
     private boolean verbose;
+    private int selectivity;
 
     public SQLOptions(){
         options = new Options();
         options.addOption("h", "help", false, "show help.");
-        options.addOption("t", "test", true, "which test to perform, options are (case insensitive): equiJoin, qXXX(tpcds queries), tpcds, readOnly ");
+        options.addOption("t", "test", true, "which test to perform, options are (case insensitive): equiJoin, qXXX(tpcds queries), tpcds, readOnly, selectivity (on HundredCols) ");
         options.addOption("i", "input", true, "comma separated list of input files/directories. " +
                 "EquiJoin takes two files, TPCDS queries takes a tpc-ds data directory, and readOnly take a file or a directory with files");
         options.addOption("w", "warmupInput", true, "warmup files with the same semantics as the -i option");
@@ -69,6 +70,7 @@ public class SQLOptions extends TestOptions {
         options.addOption("of", "outputFormat", true, "output format (where-ever applicable) default: parquet");
         options.addOption("ofo", "outputFormatOptions", true, "output format options as key0,value0,key1,value1...");
         options.addOption("qr", "queryRange", true, "run tpcds queries from index x-y, vali ranges are (0-104)=>means all");
+        options.addOption("S", "selectivity", true, "LTE selection for int0");
 
         // set defaults
         this.joinKey = "intKey";
@@ -80,6 +82,7 @@ public class SQLOptions extends TestOptions {
         this.tpcdsQuery = null;
         this.startIdx = 0;
         this.endIdx = 104;
+        this.selectivity = 100;
 
         this.inputFormatOptions = new HashMap<>(4);
         this.outputFormatOptions = new HashMap<>(4);
@@ -122,7 +125,7 @@ public class SQLOptions extends TestOptions {
                 if (cmd.hasOption("of")) {
                     this.outputFormat = cmd.getOptionValue("of").trim();
                     if (this.outputFormat.compareToIgnoreCase("nullio") == 0) {
-                        this.inputFormat = "org.apache.spark.sql.NullFileFormat";
+                        this.outputFormat = "org.apache.spark.sql.NullFileFormat";
                     }
                 }
                 if (cmd.hasOption("ofo")) {
@@ -152,6 +155,10 @@ public class SQLOptions extends TestOptions {
                     for (int i = 0; i < one.length; i += 2) {
                         this.inputFormatOptions.put(one[i].trim(), one[i + 1].trim());
                     }
+                }
+
+                if (cmd.hasOption("S")) {
+                    this.selectivity = Integer.parseInt(cmd.getOptionValue("S").trim());
                 }
 
                 if (cmd.hasOption("i")) {
@@ -200,7 +207,7 @@ public class SQLOptions extends TestOptions {
                 errorAbort("ERROR:" + " please specify some input files for the SQL test");
             }
             // check valid test names
-            if (!isTestEquiJoin() && !isTestQuery() && !isTestTPCDS() && !isTestReadOnly()) {
+            if (!isTestEquiJoin() && !isTestQuery() && !isTestTPCDS() && !isTestReadOnly() && !isTestSelectivity()) {
                 errorAbort("ERROR: illegal test name : " + this.test);
             }
         /* some sanity checks */
@@ -232,6 +239,10 @@ public class SQLOptions extends TestOptions {
     @Override
     public String getTestName() {
         return this.test;
+    }
+
+    public boolean isTestSelectivity(){
+        return this.test.compareToIgnoreCase("Selectivity") == 0;
     }
 
     public boolean isTestEquiJoin(){
@@ -291,5 +302,8 @@ public class SQLOptions extends TestOptions {
     }
     public int getEndIdx(){
         return this.endIdx;
+    }
+    public int getSelectivity(){
+        return this.selectivity;
     }
 }

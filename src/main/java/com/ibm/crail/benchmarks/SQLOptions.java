@@ -26,6 +26,7 @@ import com.ibm.crail.benchmarks.sql.Collect;
 import com.ibm.crail.benchmarks.sql.Count;
 import com.ibm.crail.benchmarks.sql.Save;
 import org.apache.commons.cli.*;
+import org.apache.spark.sql.SparkSession;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -51,6 +52,9 @@ public class SQLOptions extends TestOptions {
     private int startIdx, endIdx;
     private boolean verbose;
     private int selectivity;
+    private int partitions;
+    private int blockSize;
+    private String compressionType;
 
     public SQLOptions(){
         options = new Options();
@@ -72,6 +76,14 @@ public class SQLOptions extends TestOptions {
         options.addOption("qr", "queryRange", true, "run tpcds queries from index x-y, vali ranges are (0-104)=>means all");
         options.addOption("S", "selectivity", true, "LTE selection for int0");
 
+        // block size for any file format that supports it
+        options.addOption("bs", "blockSize", true, "block size for any file format that supports it. At this time, Parquet and ORC");
+        // number of output parition for a dataset, mostly useful when copying the data
+        options.addOption("p", "partitions", true, "number of output parition for a dataset, mostly useful when copying the data");
+        options.addOption("C", "compress", true, "<String> compression type for when writing out, valid values are: uncompressed, " +
+                "snappy, gzip, lzo (default: "
+                + this.compressionType+")");
+
         // set defaults
         this.joinKey = "intKey";
         this.inputFormat = "parquet";
@@ -83,12 +95,12 @@ public class SQLOptions extends TestOptions {
         this.startIdx = 0;
         this.endIdx = 104;
         this.selectivity = 100;
+        this.blockSize = -1;
+        this.partitions = -1;
+        this.compressionType = "uncompressed";
 
         this.inputFormatOptions = new HashMap<>(4);
         this.outputFormatOptions = new HashMap<>(4);
-        /* at this point we set some defaults */
-        // this is for parquet other options are "gzip", "snappy"
-        this.outputFormatOptions.putIfAbsent("compression", "none");
     }
 
     @Override
@@ -161,6 +173,14 @@ public class SQLOptions extends TestOptions {
                     this.selectivity = Integer.parseInt(cmd.getOptionValue("S").trim());
                 }
 
+                if (cmd.hasOption("bs")) {
+                    this.blockSize = Integer.parseInt(cmd.getOptionValue("bs").trim());
+                }
+
+                if (cmd.hasOption("p")) {
+                    this.partitions = Integer.parseInt(cmd.getOptionValue("p").trim());
+                }
+
                 if (cmd.hasOption("i")) {
                     // get the value and split it
                     this.inputFiles = cmd.getOptionValue("i").split(",");
@@ -207,12 +227,49 @@ public class SQLOptions extends TestOptions {
                 errorAbort("ERROR:" + " please specify some input files for the SQL test");
             }
             // check valid test names
-            if (!isTestEquiJoin() && !isTestQuery() && !isTestTPCDS() && !isTestReadOnly() && !isTestSelectivity()) {
+            if (!isTestEquiJoin()
+                    && !isTestQuery()
+                    && !isTestTPCDS()
+                    && !isTestReadOnly()
+                    && !isTestSelectivity()
+                    && !isTestCopy()) {
                 errorAbort("ERROR: illegal test name : " + this.test);
             }
         /* some sanity checks */
             if (isTestEquiJoin() && this.inputFiles.length != 2) {
                 errorAbort("ERROR:" + this.test + " needs two files as inputs");
+            }
+
+            if(isTestCopy() && !(this.action instanceof Save)){
+                errorAbort("ERROR:" + this.test + " only takes save action.");
+            }
+        }
+
+        // process the compression and block size options for ORC
+        if(this.outputFormat.compareToIgnoreCase("orc") == 0){
+            // compression settings
+            if(this.compressionType.compareToIgnoreCase("uncompressed") == 0 ||
+                    this.compressionType.compareToIgnoreCase("none") == 0) {
+                    this.outputFormatOptions.put("orc.compress","none");
+            } else {
+                this.outputFormatOptions.put("orc.compress",this.compressionType);
+            }
+
+            if(this.blockSize != -1){
+                String size = Integer.toString(this.blockSize);
+                // set the block size
+                this.outputFormatOptions.put("orc.stripe.size", size);
+            }
+        }
+
+        // for parquet specific settings
+        if(this.outputFormat.compareToIgnoreCase("parquet") == 0){
+            // compression settings are set on the spark configuration !
+            // we just check the block size
+            if(this.blockSize != -1){
+                String size = Integer.toString(this.blockSize);
+                // set the block size
+                this.outputFormatOptions.put("parquet.block.size", size);
             }
         }
     }
@@ -239,6 +296,10 @@ public class SQLOptions extends TestOptions {
     @Override
     public String getTestName() {
         return this.test;
+    }
+
+    public boolean isTestCopy(){
+        return this.test.compareToIgnoreCase("Copy") == 0;
     }
 
     public boolean isTestSelectivity(){
@@ -300,10 +361,23 @@ public class SQLOptions extends TestOptions {
     public int getStartIdx(){
         return this.startIdx;
     }
+
     public int getEndIdx(){
         return this.endIdx;
     }
+
     public int getSelectivity(){
         return this.selectivity;
+    }
+
+    public int getPartitions(){
+        return this.partitions;
+    }
+
+    public void setSparkSpecificSettings(SparkSession session){
+        // parquet needs it on the spark session
+        if(this.outputFormat.compareToIgnoreCase("parquet") == 0) {
+            session.sqlContext().setConf("spark.sql.parquet.compression.codec", this.compressionType);
+        }
     }
 }

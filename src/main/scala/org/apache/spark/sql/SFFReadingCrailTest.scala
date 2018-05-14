@@ -23,8 +23,8 @@ package org.apache.spark.sql
 import java.io.EOFException
 
 import com.ibm.crail.benchmarks.sql.SQLTest
-import com.ibm.crail.conf.CrailConfiguration
-import com.ibm.crail.{CrailFS, CrailFile}
+import org.apache.crail.{CrailFile, CrailStore}
+import org.apache.crail.conf.CrailConfiguration
 import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.catalyst.expressions.UnsafeRow
@@ -37,7 +37,7 @@ class SFFReadingCrailTest(val item:(List[String], Long) , spark:SparkSession) ex
 
   private class FastIterator(fileName: String, numFields: Int) extends Iterator[InternalRow] {
     private val conf = new CrailConfiguration
-    private val cfs = CrailFS.newInstance(conf)
+    private val cfs = CrailStore.newInstance(conf)
     private val fx: CrailFile = cfs.lookup(new Path(fileName).toUri.getRawPath).get().asFile()
     private val stream = fx.getBufferedInputStream(fx.getCapacity)
 

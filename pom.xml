@@ -85,12 +85,12 @@
       <version>2.2.0</version>
     </dependency>
     <dependency>
-      <groupId>com.ibm.crail</groupId>
+      <groupId>org.apache.crail</groupId>
       <artifactId>crail-client</artifactId>
       <version>1.0</version>
     </dependency>
     <dependency>
-      <groupId>com.ibm.crail</groupId>
+      <groupId>org.apache.crail</groupId>
       <artifactId>crail-hdfs</artifactId>
       <version>1.0</version>
     </dependency>

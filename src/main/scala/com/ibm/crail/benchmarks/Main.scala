@@ -58,6 +58,7 @@ object Main {
     val subsystemOptions = getTestOptions(mainOptions.getSubsystem)
     subsystemOptions.parse(subsystemArgs)
     val spark = SparkSession.builder.appName("Swiss Spark benchmarks").getOrCreate
+    subsystemOptions.setSparkSpecificSettings(spark)
 
     /* now we have everything setup */
     if(subsystemOptions.withWarmup()){

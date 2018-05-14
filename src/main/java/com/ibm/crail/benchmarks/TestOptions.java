@@ -22,6 +22,7 @@ package com.ibm.crail.benchmarks;
 
 import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
+import org.apache.spark.sql.SparkSession;
 
 import java.io.Serializable;
 
@@ -52,4 +53,8 @@ abstract public class TestOptions implements Serializable {
     abstract public boolean withWarmup();
 
     abstract public String getTestName();
+
+    public void setSparkSpecificSettings(SparkSession session){
+
+    }
 }

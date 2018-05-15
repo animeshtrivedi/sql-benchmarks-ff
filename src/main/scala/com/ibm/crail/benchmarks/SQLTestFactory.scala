@@ -20,8 +20,8 @@
  */
 package com.ibm.crail.benchmarks
 
+import com.ibm.crail.benchmarks.sql._
 import com.ibm.crail.benchmarks.sql.tpcds.{SingleTPCDSTest, TPCDSTest}
-import com.ibm.crail.benchmarks.sql.{EquiJoin, ReadOnly, SQLTest, Selectivity, Copy}
 import org.apache.spark.sql.SparkSession
 
 object SQLTestFactory {

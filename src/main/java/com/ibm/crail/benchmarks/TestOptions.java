@@ -54,6 +54,8 @@ abstract public class TestOptions implements Serializable {
 
     abstract public String getTestName();
 
+    // this spark specific setting is introduced becase of the copy test that needs to write files. And to
+    // generate a valid file, I need to setup the right format and compression type.
     public void setSparkSpecificSettings(SparkSession session){
 
     }

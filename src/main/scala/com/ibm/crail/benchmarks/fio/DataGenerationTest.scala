@@ -1,9 +1,7 @@
 package com.ibm.crail.benchmarks.fio
 
 import com.ibm.crail.benchmarks.FIOOptions
-import org.apache.hadoop.conf.Configuration
-import org.apache.hadoop.fs.{FileSystem, Path}
-import org.apache.spark.sql.{NullFileFormat, SparkSession}
+import org.apache.spark.sql.SparkSession
 
 /**
   * Created by atr on 28.11.17.

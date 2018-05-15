@@ -84,7 +84,7 @@ public class SQLOptions extends TestOptions {
         options.addOption("C", "compress", true, "<String> compression type for when writing out, valid values are: uncompressed, " +
                 "snappy, gzip, lzo (default: "
                 + this.compressionType+")");
-        options.addOption("P", "projection", true, "Array[String] column names that will be read, default " + this.projection + " (null means no projection)");
+        options.addOption("P", "projection", true, "Array[String] column names that will be read, default " + processSelectedColumns() + " (null means no projection)");
 
         // set defaults
         this.joinKey = "intKey";
@@ -185,25 +185,17 @@ public class SQLOptions extends TestOptions {
 
                 if (cmd.hasOption("i")) {
                     // get the value and split it
-                    this.inputFiles = cmd.getOptionValue("i").split(",");
-                    for (String inputFile : this.inputFiles) {
-                        inputFile.trim();
-                    }
+                    //https://stackoverflow.com/questions/41953388/java-split-and-trim-in-one-shot
+                    this.inputFiles = cmd.getOptionValue("i").trim().split("\\s*,\\s*");
                 }
 
                 if (cmd.hasOption("P")) {
                     // get the value and split it
-                    this.projection = cmd.getOptionValue("P").split(",");
-                    for (String colName : this.projection) {
-                        colName.trim();
-                    }
+                    this.projection = cmd.getOptionValue("P").trim().split("\\s*,\\s*");
                 }
                 if (cmd.hasOption("w")) {
                     // get the value and split it
-                    this.warmupInputFiles = cmd.getOptionValue("w").split(",");
-                    for (String inputFile : this.warmupInputFiles) {
-                        inputFile.trim();
-                    }
+                    this.warmupInputFiles = cmd.getOptionValue("w").trim().split("\\s*,\\s*");
                     this.doWarmup = true;
                 }
                 if (cmd.hasOption("a")) {
@@ -384,10 +376,28 @@ public class SQLOptions extends TestOptions {
         return this.partitions;
     }
 
+    public String[] getProjection(){
+        return this.projection;
+    }
+
     public void setSparkSpecificSettings(SparkSession session){
         // parquet needs it on the spark session
         if(this.outputFormat.compareToIgnoreCase("parquet") == 0) {
             session.sqlContext().setConf("spark.sql.parquet.compression.codec", this.compressionType);
+        }
+    }
+
+    public String processSelectedColumns(){
+        if(this.projection != null) {
+            StringBuilder sb = new StringBuilder();
+            sb.append("<");
+            for (int i = 0; i < this.projection.length; i++) {
+                sb.append(this.projection[i]+",");
+            }
+            sb.append(">");
+            return sb.toString();
+        } else {
+            return "<null> ";
         }
     }
 }

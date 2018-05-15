@@ -42,6 +42,7 @@ public class SQLOptions extends TestOptions {
     private String tpcdsQuery;
     private String[] inputFiles;
     private String[] warmupInputFiles;
+    private String[] projection;
     private boolean doWarmup;
     private String joinKey;
     private Action action;
@@ -83,6 +84,7 @@ public class SQLOptions extends TestOptions {
         options.addOption("C", "compress", true, "<String> compression type for when writing out, valid values are: uncompressed, " +
                 "snappy, gzip, lzo (default: "
                 + this.compressionType+")");
+        options.addOption("P", "projection", true, "Array[String] column names that will be read, default " + this.projection + " (null means no projection)");
 
         // set defaults
         this.joinKey = "intKey";
@@ -98,7 +100,7 @@ public class SQLOptions extends TestOptions {
         this.blockSize = -1;
         this.partitions = -1;
         this.compressionType = "uncompressed";
-
+        this.projection = null;
         this.inputFormatOptions = new HashMap<>(4);
         this.outputFormatOptions = new HashMap<>(4);
     }
@@ -186,6 +188,14 @@ public class SQLOptions extends TestOptions {
                     this.inputFiles = cmd.getOptionValue("i").split(",");
                     for (String inputFile : this.inputFiles) {
                         inputFile.trim();
+                    }
+                }
+
+                if (cmd.hasOption("P")) {
+                    // get the value and split it
+                    this.projection = cmd.getOptionValue("P").split(",");
+                    for (String colName : this.projection) {
+                        colName.trim();
                     }
                 }
                 if (cmd.hasOption("w")) {
